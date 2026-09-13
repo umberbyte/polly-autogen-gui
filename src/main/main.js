@@ -22,6 +22,8 @@ const {
 const AWS_REGION = 'ap-northeast-1';
 const BATCH_CONCURRENCY = 20;
 
+const activeBatchCancels = new Map();
+
 const DEFAULT_VOICE_SETTINGS = {
   languageCode: 'ja-JP',
   engine: 'neural',
@@ -268,6 +270,10 @@ ipcMain.handle(
     let nextIndex = 0;
     let dialogChain = Promise.resolve();
 
+    activeBatchCancels.set(event.sender.id, () => {
+      stopped = true;
+    });
+
     async function worker() {
       for (;;) {
         if (stopped || nextIndex >= rows.length) return;
@@ -327,8 +333,12 @@ ipcMain.handle(
       }
     }
 
-    await Promise.all(Array.from({ length: workerCount }, () => worker()));
-    await dialogChain;
+    try {
+      await Promise.all(Array.from({ length: workerCount }, () => worker()));
+      await dialogChain;
+    } finally {
+      activeBatchCancels.delete(event.sender.id);
+    }
 
     event.sender.send('spreadsheet:batch-progress', {
       type: 'done',
@@ -342,6 +352,11 @@ ipcMain.handle(
     return { ok: true, stopped };
   },
 );
+
+ipcMain.on('spreadsheet:batch-cancel', (event) => {
+  const cancel = activeBatchCancels.get(event.sender.id);
+  if (cancel) cancel();
+});
 
 ipcMain.handle('dialog:select-pptx-file', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);

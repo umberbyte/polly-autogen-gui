@@ -56,6 +56,7 @@ const statusEl = document.getElementById('status');
 const tableBody = document.getElementById('script-table-body');
 const saveBtn = document.getElementById('save-btn');
 const batchGenerateBtn = document.getElementById('batch-generate-btn');
+const batchCancelBtn = document.getElementById('batch-cancel-btn');
 const batchProgressEl = document.getElementById('batch-progress');
 const editDialog = document.getElementById('edit-dialog');
 const editTextarea = document.getElementById('edit-textarea');
@@ -185,6 +186,8 @@ async function generateOneRow(index) {
 
 batchGenerateBtn.addEventListener('click', async () => {
   batchGenerateBtn.disabled = true;
+  batchCancelBtn.hidden = false;
+  batchCancelBtn.disabled = false;
   batchProgressEl.textContent = '';
   setStatus('一括音声出力を開始します...');
   try {
@@ -203,6 +206,13 @@ batchGenerateBtn.addEventListener('click', async () => {
     setStatus(`一括音声出力に失敗しました: ${error.message || error}`);
   }
   batchGenerateBtn.disabled = false;
+  batchCancelBtn.hidden = true;
+});
+
+batchCancelBtn.addEventListener('click', () => {
+  batchCancelBtn.disabled = true;
+  setStatus('中止要求を送信しました。処理中のリクエストの完了を待っています...');
+  window.spreadsheetAPI.cancelBatchGenerate();
 });
 
 function formatBatchProgress(progress) {
@@ -238,7 +248,7 @@ window.spreadsheetAPI.onBatchProgress((progress) => {
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(
         progress.stopped
-          ? `エラーのため一括音声出力を中断しました(${progress.completed}/${progress.total}件処理、エラー${progress.errorCount}件)`
+          ? `一括音声出力を中止しました(${progress.completed}/${progress.total}件処理、エラー${progress.errorCount}件)`
           : progress.errorCount > 0
             ? `一括音声出力が完了しました(${progress.total}件中${progress.errorCount}件エラー)`
             : `一括音声出力が完了しました(${progress.total}件)`,
