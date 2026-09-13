@@ -19,9 +19,13 @@ Electron標準の3層構成:
 - **renderer**(`src/renderer/`) — 素のHTML/CSS/JS(フレームワーク不使用)によるUI
 - Polly呼び出し・テキスト分割・ファイルI/Oのコアロジックは `src/main/polly.js` に集約
 - AWS SDKは `@aws-sdk/client-polly`(JS SDK v3)を使用
-- 認証情報・リージョンはAWSのデフォルト認証チェーン(`~/.aws/credentials` / 環境変数など)に従う。GUI上にアクセスキー等の入力フォームは設けない方針
+- 認証情報・リージョンはAWSのデフォルト認証チェーン(`~/.aws/credentials` / 環境変数など)に従う。GUI上から`~/.aws/credentials`の`[default]`プロファイルを直接編集できる(後述)
 
 ### UIの操作フロー
+
+画面最上部に独立した「設定」セクションがあり、2つのボタンを配置している(`src/main/awsCredentials.js`):
+- 「AWSアカウントの設定」— クリックするとダイアログが開き、Access Key ID・Secret Access Keyを**プレーンテキストで**(マスクせず)入力できる。開いた時点で`~/.aws/credentials`の`[default]`プロファイルの現在値を読み込んで表示する。保存すると、既存ファイルの`[default]`セクションだけを更新し(他のプロファイルやコメントはそのまま残す)、無ければ新規作成する。パーミッションは600に設定する
+- 「設定ファイルを編集」— `~/.aws/credentials`をOSの「テキストファイルに関連付けられたアプリケーション」で開く(`shell.openPath`。ファイルをダブルクリックした場合と同じ挙動)。ファイルが存在しない場合は空の`[default]`テンプレートを作成してから開く
 
 1. 「ファイルを選択」または「フォルダを選択」ボタンで対象を選ぶ(`dialog:select-file` / `dialog:select-directory` IPC)
 2. オプションフォームで以下を設定:
@@ -186,7 +190,7 @@ pptxはZIP+XML(OOXML)なので、`jszip`で展開し`@xmldom/xmldom`でXMLをDOM
 ## 経緯・決定事項
 
 - 元々はPython製CLIツール `polly-autogen` として存在(ディレクトリ/ファイルモード、`--voice-id` 等のオプション、長文自動分割の仕様はそのCLI版を踏襲)。それをElectronベースのGUIアプリ `polly-autogen-gui` として再実装した
-- GUI版ではAWS認証情報の入力フォームを設けず、AWS CLI/SDKのデフォルト認証チェーンに委ねる方針とした(CLI版の思想を踏襲し、スコープ拡大を避けるため)
+- GUI版では当初AWS認証情報の入力フォームを設けず、AWS CLI/SDKのデフォルト認証チェーンに委ねる方針だった(CLI版の思想を踏襲し、スコープ拡大を避けるため)。その後ユーザーからの明示的な要望により方針転換し、GUIから`~/.aws/credentials`を直接設定・編集できる機能を追加した(後述)。認証チェーン自体(`~/.aws/credentials`をAWS SDKがそのまま参照する)は変わっておらず、GUIはそのファイルを編集する手段を提供するだけという位置付け
 - 出力フォーマットの選択に応じて出力ファイルの拡張子を切り替える(`mp3`/`ogg`/`pcm`)よう、CLI版の「常に`.mp3`」から仕様を拡張した
 - ディレクトリモードは1ファイルのエラーで全体を止めず、バッチとして処理を継続する方針とした(GUIのバッチツールとしての挙動を優先)
 - Voice ID / Language Code / Engine は当初テキスト入力・固定選択肢だったが、存在しない組み合わせを選んでAPIエラーになるのを防ぐため、Amazon Polly `DescribeVoices` APIから動的に取得したデータで連動プルダウンに変更した。ハードコードした音声一覧を持たない方針(APIの音声追加/変更に追従できるため)
@@ -198,6 +202,10 @@ pptxはZIP+XML(OOXML)なので、`jszip`で展開し`@xmldom/xmldom`でXMLをDOM
 - さらに、「`text`フォルダ自体を選んでしまう」ケースは警告を出すだけでなく、実際に読み込み・保存の両方が正しく動くように自動補正する方針に変更した(選択したフォルダに`text`という名前が付いていて、かつ`<選択>/text`が存在しない場合は、一つ上の階層を作業フォルダとして扱う)。ユーザーからの追加要望を受けての対応
 - 「Excelファイルを選択」時に提案する作業フォルダが既に存在する場合、既存の作業フォルダ(過去の編集内容を含む可能性がある)を誤って再利用してしまわないよう、末尾に` (2)`、` (3)`...と連番を付けて回避する方針とした。ユーザーからの明示的な要望
 - 音声設定(Language Code/Engine/Voice ID/Output Format)を設定ファイルに保存し、現在の選択が保存済みの設定とずれている場合にプルダウンへ視覚的な警告を出す機能を追加した。視覚的な警告は`border`ではなく`outline`(`outline-offset: -1px`)で実装し、レイアウトのサイズ・位置に一切影響しないようにした(ユーザーからの明示的な指定)
+- AWSアカウント設定機能を追加するにあたり、Secret Access Keyの入力欄は`type="password"`でマスクせず、`type="text"`のプレーンテキスト入力にした(ユーザーからの明示的な指定。誤入力に気づきやすくする狙いと考えられる)
+- `~/.aws/credentials`の更新は、ファイル全体を単純に上書きするのではなく、`[default]`セクションの2行(`aws_access_key_id`/`aws_secret_access_key`)だけを正規表現で置換・挿入する方式にした。ユーザーが将来別プロファイルを追加したり、コメントを書き加えたりしても壊さないようにするため
+- 「設定ファイルを編集」ボタンは、独自のテキストエディタUIを作らず、OSの`shell.openPath`(ファイルをダブルクリックしたときと同じ、テキストファイルに関連付けられたアプリで開く)を使う方針とした。ユーザーからの明示的な指定
+- AWSアカウント設定・設定ファイル編集のボタンは、当初オプションフォーム内の項目として配置していたが、ユーザーの指示で画面最上部に独立した「設定」セクションとして切り出した
 - 上記の音声設定は、当初は「保存済みの設定と一致しているかを知らせるだけ(自動適用はしない)」という方針だったが、その後「初回起動時のデフォルトは`ja-JP`/`neural`/`Tomoko`とし、設定ファイルが無い/空ならそれを保存する。2回目以降の起動では設定ファイルを読み込んで画面に反映する」という要望に変更された。これにより、設定ファイルは単なる比較用ではなく、実際に起動時の初期値を決めるものになった。Voice IDのハードコードされたデフォルトも`Takumi`から`Tomoko`に変更した
 - スプレッドシート編集画面にmp3生成機能(一括音声出力・行ごとの個別生成・再生)を追加した。音声合成に使うPolly設定は、メイン画面の「音声設定保存」機能で保存された`voice-settings.json`をスプレッドシート画面を開く時点で読み込んで利用する(スプレッドシート画面自体には音声設定の変更UIは置かない)。出力フォーマットはユーザーの指示文言(「mp3フォルダ」「テキストファイル名.mp3」等)に合わせて常に`mp3`固定とし、メイン画面のOutput Format設定には連動させない
 - mp3の出力先は`<作業フォルダ>/mp3/`(`text`フォルダと同階層のサブフォルダ)とした。既存の`convertTextFile`(`src/main/polly.js`)は入力ファイルと同階層に`mp3`フォルダを作る仕様のため、そのまま使うと`<作業フォルダ>/text/mp3/`になってしまい要件と異なる。そのため専用の書き出し関数(`synthesizeRowToMp3`、`src/main/spreadsheetAudio.js`)を新設し、`synthesizeToAudio`(`polly.js`から新たにexport)のみを再利用する形にした
@@ -221,6 +229,7 @@ pptxはZIP+XML(OOXML)なので、`jszip`で展開し`@xmldom/xmldom`でXMLをDOM
 - `src/main/voiceSettings.js` — 音声設定(Language Code/Engine/Voice ID/Output Format)の保存・読み込み
 - `src/main/spreadsheetAudio.js` — スプレッドシート画面向けのmp3生成・存在チェック(`<作業フォルダ>/mp3/`への書き出し)
 - `src/main/pptxEmbed.js` — PowerPoint(pptx/OOXML)への音声埋め込み(処理用コピー作成・表示順スライド解決・音声オブジェクト/自動再生タイミング/自動送り時間の書き込み)。依存: `jszip` / `@xmldom/xmldom` / `music-metadata`(いずれも`dependencies`に追加済み)。テスト用pptx生成のため`pptxgenjs`を`devDependencies`に追加
+- `src/main/awsCredentials.js` — `~/.aws/credentials`の`[default]`プロファイルの読み書き(GUIからの直接入力・編集用)
 - `src/renderer/index.html` — メイン画面UI
 - `src/renderer/renderer.js` — メイン画面のUIロジック(IPC呼び出し、進捗・ログ表示)
 - `src/renderer/style.css` — メイン画面のスタイル

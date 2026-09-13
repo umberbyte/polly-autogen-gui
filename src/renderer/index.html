@@ -8,6 +8,14 @@
 <body>
   <h1>Polly Autogen GUI</h1>
 
+  <section class="settings-section">
+    <h2>設定</h2>
+    <div class="aws-account-buttons">
+      <button id="aws-account-settings-btn">AWSアカウントの設定</button>
+      <button id="aws-credentials-edit-btn">設定ファイルを編集</button>
+    </div>
+  </section>
+
   <section class="excel-section">
     <h2>台本(Excel)からテキストを作成</h2>
     <div class="target-buttons">
@@ -83,6 +91,24 @@
     <h2>ログ</h2>
     <pre id="log"></pre>
   </section>
+
+  <dialog id="aws-credentials-dialog">
+    <form method="dialog">
+      <h2>AWSアカウントの設定</h2>
+      <div class="field">
+        <label for="aws-access-key-input">Access Key ID</label>
+        <input id="aws-access-key-input" type="text" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="aws-secret-key-input">Secret Access Key</label>
+        <input id="aws-secret-key-input" type="text" autocomplete="off" />
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" id="aws-credentials-cancel-btn">キャンセル</button>
+        <button type="submit" id="aws-credentials-save-btn" value="save">保存</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="renderer.js"></script>
 </body>

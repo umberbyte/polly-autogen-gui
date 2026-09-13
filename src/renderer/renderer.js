@@ -66,6 +66,38 @@ document.getElementById('open-workfolder-btn').addEventListener('click', async (
   }
 });
 
+const awsAccountSettingsBtn = document.getElementById('aws-account-settings-btn');
+const awsCredentialsEditBtn = document.getElementById('aws-credentials-edit-btn');
+const awsCredentialsDialog = document.getElementById('aws-credentials-dialog');
+const awsAccessKeyInput = document.getElementById('aws-access-key-input');
+const awsSecretKeyInput = document.getElementById('aws-secret-key-input');
+const awsCredentialsCancelBtn = document.getElementById('aws-credentials-cancel-btn');
+const awsCredentialsSaveBtn = document.getElementById('aws-credentials-save-btn');
+
+awsAccountSettingsBtn.addEventListener('click', async () => {
+  const current = await window.pollyAutogen.readAwsCredentials();
+  awsAccessKeyInput.value = (current && current.accessKeyId) || '';
+  awsSecretKeyInput.value = (current && current.secretAccessKey) || '';
+  awsCredentialsDialog.showModal();
+});
+
+awsCredentialsCancelBtn.addEventListener('click', () => {
+  awsCredentialsDialog.close();
+});
+
+awsCredentialsSaveBtn.addEventListener('click', async () => {
+  await window.pollyAutogen.saveAwsCredentials({
+    accessKeyId: awsAccessKeyInput.value.trim(),
+    secretAccessKey: awsSecretKeyInput.value.trim(),
+  });
+  appendLog('AWSアカウントの設定を保存しました');
+});
+
+awsCredentialsEditBtn.addEventListener('click', async () => {
+  const result = await window.pollyAutogen.openAwsCredentialsFile();
+  if (!result.ok) appendLog(`設定ファイルを開けませんでした: ${result.error}`);
+});
+
 const pptxFileLabel = document.getElementById('pptx-file-label');
 const mp3FolderLabel = document.getElementById('mp3-folder-label');
 const embedAudioBtn = document.getElementById('embed-audio-btn');

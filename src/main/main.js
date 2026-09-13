@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { PollyClient, DescribeVoicesCommand } = require('@aws-sdk/client-polly');
@@ -13,6 +13,11 @@ const { openSpreadsheetWindow } = require('./spreadsheetWindow');
 const { loadVoiceSettings, saveVoiceSettings } = require('./voiceSettings');
 const { checkMp3Status, anyMp3Exists, synthesizeRowToMp3 } = require('./spreadsheetAudio');
 const { createWorkingCopy, embedAudioIntoPptx } = require('./pptxEmbed');
+const {
+  readDefaultCredentials,
+  saveDefaultCredentials,
+  ensureCredentialsFileExists,
+} = require('./awsCredentials');
 
 const DEFAULT_VOICE_SETTINGS = {
   languageCode: 'ja-JP',
@@ -107,6 +112,19 @@ ipcMain.handle('polly:list-voices', async (event, { region } = {}) => {
     languageName: voice.LanguageName,
     engines: voice.SupportedEngines || [],
   }));
+});
+
+ipcMain.handle('settings:read-aws-credentials', () => readDefaultCredentials());
+
+ipcMain.handle('settings:save-aws-credentials', async (event, credentials) => {
+  await saveDefaultCredentials(credentials);
+  return { ok: true };
+});
+
+ipcMain.handle('settings:open-aws-credentials-file', async () => {
+  const filePath = await ensureCredentialsFileExists();
+  const error = await shell.openPath(filePath);
+  return { ok: !error, error: error || null };
 });
 
 ipcMain.handle('settings:load-voice-settings', () => loadVoiceSettings());
