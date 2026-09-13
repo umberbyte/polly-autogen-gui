@@ -31,7 +31,7 @@ async function parseTalkScriptSheet(excelPath) {
     const row = sheet.getRow(rowNumber);
     const pageNumber = cellValueToString(row.getCell(PAGE_NUMBER_COLUMN).value).trim();
     const script = cellValueToString(row.getCell(SCRIPT_COLUMN).value).trim();
-    if (!pageNumber || !script) continue;
+    if (!/^\d+$/.test(pageNumber) || !script) continue;
     rows.push({ pageNumber, script });
   }
 
