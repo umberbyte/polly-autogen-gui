@@ -43,9 +43,9 @@ async function attachMp3Status(workingFolder, prefix, rows) {
 function createWindow() {
   const win = new BrowserWindow({
     width: 880,
-    height: 1000,
+    height: 1200,
     minWidth: 720,
-    minHeight: 560,
+    minHeight: 650,
     backgroundColor: '#f3f3f3',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
