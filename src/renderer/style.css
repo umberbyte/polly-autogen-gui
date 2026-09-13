@@ -1,0 +1,326 @@
+:root {
+  --bg: #f3f3f3;
+  --card: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.06);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --text: #1b1b1b;
+  --text-secondary: #5f5f5f;
+  --stroke: rgba(0, 0, 0, 0.16);
+  --stroke-strong: rgba(0, 0, 0, 0.45);
+  --accent: #005fb8;
+  --accent-hover: #1a6fc4;
+  --accent-active: #004c93;
+  --accent-soft: rgba(0, 95, 184, 0.09);
+  --danger: #c42b1c;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --font: "Segoe UI Variable", "Segoe UI", -apple-system, "Yu Gothic UI", "Meiryo", "Hiragino Sans", sans-serif;
+  --mono: "Cascadia Mono", "Consolas", "Menlo", "SF Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  overflow-y: auto;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  margin: 0;
+  padding: 20px 24px 28px;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+/* ---- cards ---- */
+.card,
+.excel-section,
+.pptx-section,
+.log-section {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.excel-section,
+.pptx-section {
+  border-top: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.card section {
+  margin-bottom: 14px;
+}
+
+.card section:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- buttons ---- */
+button {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  border-bottom-color: rgba(0, 0, 0, 0.28);
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+button:hover {
+  background: #f9f9f9;
+}
+
+button:active {
+  background: #f0f0f0;
+  color: var(--text-secondary);
+}
+
+button:disabled {
+  background: #f5f5f5;
+  color: #9d9d9d;
+  border-color: rgba(0, 0, 0, 0.08);
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+#convert-btn,
+#embed-audio-btn {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+#convert-btn:hover,
+#embed-audio-btn:hover {
+  background: var(--accent-hover);
+}
+
+#convert-btn:active,
+#embed-audio-btn:active {
+  background: var(--accent-active);
+  color: #ffffff;
+}
+
+#convert-btn:disabled,
+#embed-audio-btn:disabled {
+  background: #c9c9c9;
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* ---- inputs ---- */
+input[type="text"],
+select {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  border-bottom-color: var(--stroke-strong);
+  background: #ffffff;
+  color: var(--text);
+  outline: none;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+input[type="text"]:hover,
+select:hover {
+  background: #fcfcfc;
+}
+
+input[type="text"]:focus,
+select:focus {
+  border-bottom-color: var(--accent);
+  box-shadow: inset 0 -1px 0 var(--accent);
+}
+
+input[readonly] {
+  background: #f7f7f7;
+  color: var(--text-secondary);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4.5l4 4 4-4' fill='none' stroke='%235f5f5f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+/* ---- sections ---- */
+.target-section {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.target-section h2 {
+  width: 100%;
+  margin: 0 0 6px;
+}
+
+.target-buttons,
+.pptx-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pptx-row {
+  margin-bottom: 12px;
+}
+
+#target-path {
+  flex: 1;
+  min-width: 240px;
+}
+
+.options-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  gap: 12px 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.field input,
+.field select {
+  width: 100%;
+}
+
+.field select.mismatch {
+  outline: 2px solid var(--danger);
+  outline-offset: -1px;
+}
+
+.run-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---- progress pills ---- */
+#overall-progress,
+#embed-progress {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+#overall-progress:empty,
+#embed-progress:empty {
+  display: none;
+}
+
+/* ---- file list ---- */
+#file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: #fafafa;
+}
+
+#file-list:empty {
+  display: none;
+}
+
+#file-list li {
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+}
+
+#file-list li:last-child {
+  border-bottom: none;
+}
+
+#file-list li:hover {
+  background: #f2f2f2;
+}
+
+/* ---- pptx section ---- */
+.pptx-file-label {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.path-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+/* ---- log ---- */
+.log-section h2 {
+  margin-bottom: 8px;
+}
+
+#log {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 10px 12px;
+  height: 130px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 6px;
+  margin: 0;
+}

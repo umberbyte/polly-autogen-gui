@@ -1,0 +1,39 @@
+{
+  "name": "polly-autogen-gui",
+  "version": "1.0.0",
+  "description": "Amazon Pollyでテキストを音声化するGUIツール(polly-autogenのGUI版)",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac --win"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "pptxgenjs": "^4.0.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-polly": "^3.1131.0",
+    "@xmldom/xmldom": "^0.9.12",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.2",
+    "music-metadata": "^11.15.0"
+  },
+  "build": {
+    "appId": "com.gsgwr.polly-autogen-gui",
+    "productName": "Polly Autogen",
+    "files": [
+      "src/**/*"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

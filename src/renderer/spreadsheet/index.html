@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>トークスクリプト編集</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="voice-settings-label" class="voice-settings-label"></div>
+
+  <div class="toolbar">
+    <span id="working-folder-label"></span>
+    <button id="save-btn">保存</button>
+    <button id="batch-generate-btn">一括音声出力</button>
+    <span id="batch-progress"></span>
+    <span id="status"></span>
+  </div>
+
+  <table id="script-table">
+    <thead>
+      <tr>
+        <th class="page-number-col">ページ番号</th>
+        <th>トークスクリプト</th>
+        <th class="actions-col">操作</th>
+      </tr>
+    </thead>
+    <tbody id="script-table-body"></tbody>
+  </table>
+
+  <dialog id="edit-dialog">
+    <form method="dialog">
+      <textarea id="edit-textarea" rows="10"></textarea>
+      <div class="dialog-buttons">
+        <button type="button" id="edit-cancel-btn">キャンセル</button>
+        <button type="submit" id="edit-ok-btn" value="ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <audio id="audio-player"></audio>
+
+  <script src="spreadsheet.js"></script>
+</body>
+</html>

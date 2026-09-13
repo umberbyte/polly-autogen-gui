@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Polly Autogen GUI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Polly Autogen GUI</h1>
+
+  <section class="excel-section">
+    <h2>台本(Excel)からテキストを作成</h2>
+    <div class="target-buttons">
+      <button id="select-excel-btn">Excelファイルを選択</button>
+      <button id="open-workfolder-btn">作業フォルダを開く</button>
+    </div>
+  </section>
+
+  <div class="card audio-card">
+  <section class="target-section">
+    <h2>ファイルまたはフォルダから音声出力</h2>
+    <div class="target-buttons">
+      <button id="select-file-btn">ファイルを選択</button>
+      <button id="select-directory-btn">フォルダを選択</button>
+    </div>
+    <input id="target-path" type="text" readonly placeholder="未選択" />
+  </section>
+
+  <section class="options-section">
+    <div class="field">
+      <label for="region">Region</label>
+      <input id="region" type="text" placeholder="AWS設定に従う" />
+    </div>
+    <div class="field">
+      <label for="language-code">Language Code</label>
+      <select id="language-code" autocomplete="off"></select>
+    </div>
+    <div class="field">
+      <label for="engine">Engine</label>
+      <select id="engine" autocomplete="off"></select>
+    </div>
+    <div class="field">
+      <label for="voice-id">Voice ID</label>
+      <select id="voice-id" autocomplete="off"></select>
+    </div>
+    <div class="field">
+      <label for="output-format">Output Format</label>
+      <select id="output-format">
+        <option value="mp3" selected>mp3</option>
+        <option value="ogg_vorbis">ogg_vorbis</option>
+        <option value="pcm">pcm</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="run-section">
+    <button id="convert-btn" disabled>変換開始</button>
+    <button id="reload-voices-btn">音声一覧を再取得</button>
+    <button id="save-voice-settings-btn">現在の音声設定を保存する</button>
+    <span id="overall-progress"></span>
+  </section>
+
+  <section class="progress-section">
+    <ul id="file-list"></ul>
+  </section>
+  </div>
+
+  <section class="pptx-section">
+    <h2>PowerPointへの音声埋め込み</h2>
+    <div class="pptx-row">
+      <button id="select-pptx-btn">PowerPointファイルを選択</button>
+      <span id="pptx-file-label" class="pptx-file-label"></span>
+      <button id="select-mp3-folder-btn">MP3フォルダを指定</button>
+      <span id="mp3-folder-label" class="path-label"></span>
+    </div>
+    <div class="run-section">
+      <button id="embed-audio-btn" disabled>音声を埋め込む</button>
+      <span id="embed-progress"></span>
+    </div>
+  </section>
+
+  <section class="log-section">
+    <h2>ログ</h2>
+    <pre id="log"></pre>
+  </section>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
