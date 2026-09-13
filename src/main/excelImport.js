@@ -11,6 +11,9 @@ function cellValueToString(value) {
   if (typeof value === 'object' && Array.isArray(value.richText)) {
     return value.richText.map((part) => part.text).join('');
   }
+  if (typeof value === 'object' && (value.formula !== undefined || value.sharedFormula !== undefined)) {
+    return cellValueToString(value.result);
+  }
   if (typeof value === 'object' && value.text !== undefined) {
     return String(value.text);
   }
