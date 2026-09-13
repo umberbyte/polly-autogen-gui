@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('pollyAutogen', {
   readAwsCredentials: () => ipcRenderer.invoke('settings:read-aws-credentials'),
   saveAwsCredentials: (credentials) => ipcRenderer.invoke('settings:save-aws-credentials', credentials),
   openAwsCredentialsFile: () => ipcRenderer.invoke('settings:open-aws-credentials-file'),
-  listVoices: (region) => ipcRenderer.invoke('polly:list-voices', { region }),
+  listVoices: () => ipcRenderer.invoke('polly:list-voices'),
   loadVoiceSettings: () => ipcRenderer.invoke('settings:load-voice-settings'),
   saveVoiceSettings: (settings) => ipcRenderer.invoke('settings:save-voice-settings', settings),
   convert: (payload) => ipcRenderer.invoke('polly:convert', payload),

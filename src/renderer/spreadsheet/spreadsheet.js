@@ -205,34 +205,43 @@ batchGenerateBtn.addEventListener('click', async () => {
   batchGenerateBtn.disabled = false;
 });
 
+function formatBatchProgress(progress) {
+  const completed = progress.completed ?? 0;
+  const active = progress.active ?? 0;
+  const max = progress.maxConcurrency ?? 0;
+  return `[${completed}/${progress.total}] (スレッド ${active}/${max})`;
+}
+
 window.spreadsheetAPI.onBatchProgress((progress) => {
   switch (progress.type) {
     case 'start':
-      batchProgressEl.textContent = `[0/${progress.total}]`;
-      setStatus('一括音声出力中...');
+      batchProgressEl.textContent = formatBatchProgress(progress);
+      setStatus(`一括音声出力中...(最大${progress.maxConcurrency}件同時処理)`);
       break;
     case 'row-start':
-      batchProgressEl.textContent = `[${progress.index}/${progress.total}]`;
+      batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`ページ${progress.pageNumber}を音声化中...`);
       break;
     case 'row-done': {
       const row = state.rows.find((r) => r.pageNumber === progress.pageNumber);
       if (row) row.hasMp3 = true;
       renderRows();
-      batchProgressEl.textContent = `[${progress.index}/${progress.total}]`;
-      setStatus(`ページ${progress.pageNumber}完了`);
+      batchProgressEl.textContent = formatBatchProgress(progress);
+      setStatus(`ページ${progress.pageNumber}完了(${progress.completed}/${progress.total})`);
       break;
     }
     case 'row-error':
-      batchProgressEl.textContent = `[${progress.index}/${progress.total}]`;
+      batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`ページ${progress.pageNumber}でエラー: ${progress.error}`);
       break;
     case 'done':
-      if (!progress.stopped) batchProgressEl.textContent = `[${progress.total}/${progress.total}]`;
+      batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(
         progress.stopped
-          ? `エラーのため一括音声出力を中断しました(${progress.total}件中途中まで)`
-          : `一括音声出力が完了しました(${progress.total}件)`,
+          ? `エラーのため一括音声出力を中断しました(${progress.completed}/${progress.total}件処理、エラー${progress.errorCount}件)`
+          : progress.errorCount > 0
+            ? `一括音声出力が完了しました(${progress.total}件中${progress.errorCount}件エラー)`
+            : `一括音声出力が完了しました(${progress.total}件)`,
       );
       break;
     default:

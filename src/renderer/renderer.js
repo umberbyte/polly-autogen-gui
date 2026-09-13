@@ -18,7 +18,6 @@ const languageCodeSelect = document.getElementById('language-code');
 const voiceIdSelect = document.getElementById('voice-id');
 const engineSelect = document.getElementById('engine');
 const outputFormatSelect = document.getElementById('output-format');
-const regionInput = document.getElementById('region');
 
 function appendLog(message) {
   logEl.textContent += `${message}\n`;
@@ -242,7 +241,7 @@ async function loadVoices() {
   reloadVoicesBtn.disabled = true;
   appendLog('音声一覧を取得中...');
   try {
-    state.voices = await window.pollyAutogen.listVoices(regionInput.value);
+    state.voices = await window.pollyAutogen.listVoices();
     populateLanguageOptions();
     appendLog(`音声一覧を取得しました(${state.voices.length}件)`);
   } catch (error) {
@@ -316,7 +315,6 @@ function getOptions() {
     voiceId: voiceIdSelect.value,
     engine: engineSelect.value,
     languageCode: languageCodeSelect.value,
-    region: regionInput.value,
     outputFormat: outputFormatSelect.value,
   };
 }

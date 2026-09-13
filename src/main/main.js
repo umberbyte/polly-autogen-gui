@@ -19,6 +19,9 @@ const {
   ensureCredentialsFileExists,
 } = require('./awsCredentials');
 
+const AWS_REGION = 'ap-northeast-1';
+const BATCH_CONCURRENCY = 20;
+
 const DEFAULT_VOICE_SETTINGS = {
   languageCode: 'ja-JP',
   engine: 'neural',
@@ -92,8 +95,8 @@ ipcMain.handle('dialog:select-working-folder', async (event, { defaultPath } = {
   return result.filePaths[0];
 });
 
-ipcMain.handle('polly:list-voices', async (event, { region } = {}) => {
-  const pollyClient = new PollyClient({ region: region || undefined });
+ipcMain.handle('polly:list-voices', async () => {
+  const pollyClient = new PollyClient({ region: AWS_REGION });
 
   const voices = [];
   let nextToken;
@@ -135,9 +138,8 @@ ipcMain.handle('settings:save-voice-settings', (event, settings) => {
 });
 
 ipcMain.handle('polly:convert', async (event, payload) => {
-  const { options } = payload;
   const pollyClient = new PollyClient({
-    region: options.region || undefined,
+    region: AWS_REGION,
   });
 
   const onProgress = (progress) => {
@@ -222,7 +224,7 @@ ipcMain.handle(
     if (!row) return { ok: false, pageNumber, error: '対象の行が見つかりません' };
 
     try {
-      const pollyClient = new PollyClient({});
+      const pollyClient = new PollyClient({ region: AWS_REGION });
       const outPath = await synthesizeRowToMp3(pollyClient, workingFolder, prefix, row, voiceSettings);
       return { ok: true, pageNumber, outPath };
     } catch (error) {
@@ -249,55 +251,94 @@ ipcMain.handle(
       if (result.response !== 0) return { ok: false, canceled: true };
     }
 
-    const pollyClient = new PollyClient({});
+    const pollyClient = new PollyClient({ region: AWS_REGION, maxAttempts: 5 });
     const total = rows.length;
-    event.sender.send('spreadsheet:batch-progress', { type: 'start', total });
+    const workerCount = Math.min(BATCH_CONCURRENCY, rows.length);
+    event.sender.send('spreadsheet:batch-progress', {
+      type: 'start',
+      total,
+      active: 0,
+      maxConcurrency: workerCount,
+    });
 
     let stopped = false;
-    for (let i = 0; i < rows.length; i += 1) {
-      const row = rows[i];
-      event.sender.send('spreadsheet:batch-progress', {
-        type: 'row-start',
-        index: i + 1,
-        total,
-        pageNumber: row.pageNumber,
-      });
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        await synthesizeRowToMp3(pollyClient, workingFolder, prefix, row, voiceSettings);
+    let completed = 0;
+    let errorCount = 0;
+    let active = 0;
+    let nextIndex = 0;
+    let dialogChain = Promise.resolve();
+
+    async function worker() {
+      for (;;) {
+        if (stopped || nextIndex >= rows.length) return;
+        const row = rows[nextIndex];
+        nextIndex += 1;
+
+        active += 1;
         event.sender.send('spreadsheet:batch-progress', {
-          type: 'row-done',
-          index: i + 1,
+          type: 'row-start',
           total,
           pageNumber: row.pageNumber,
-        });
-      } catch (error) {
-        const message = error.message || String(error);
-        event.sender.send('spreadsheet:batch-progress', {
-          type: 'row-error',
-          index: i + 1,
-          total,
-          pageNumber: row.pageNumber,
-          error: message,
+          active,
+          maxConcurrency: workerCount,
         });
 
-        // eslint-disable-next-line no-await-in-loop
-        const choice = await dialog.showMessageBox(win, {
-          type: 'error',
-          message: `ページ${row.pageNumber}の音声生成でエラーが発生しました`,
-          detail: message,
-          buttons: ['続行', '中止'],
-          defaultId: 0,
-          cancelId: 1,
-        });
-        if (choice.response !== 0) {
-          stopped = true;
-          break;
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await synthesizeRowToMp3(pollyClient, workingFolder, prefix, row, voiceSettings);
+          active -= 1;
+          completed += 1;
+          event.sender.send('spreadsheet:batch-progress', {
+            type: 'row-done',
+            completed,
+            total,
+            pageNumber: row.pageNumber,
+            active,
+            maxConcurrency: workerCount,
+          });
+        } catch (error) {
+          active -= 1;
+          completed += 1;
+          errorCount += 1;
+          const message = error.message || String(error);
+          event.sender.send('spreadsheet:batch-progress', {
+            type: 'row-error',
+            completed,
+            total,
+            pageNumber: row.pageNumber,
+            error: message,
+            active,
+            maxConcurrency: workerCount,
+          });
+
+          dialogChain = dialogChain.then(async () => {
+            if (stopped) return;
+            const choice = await dialog.showMessageBox(win, {
+              type: 'error',
+              message: `ページ${row.pageNumber}の音声生成でエラーが発生しました`,
+              detail: message,
+              buttons: ['続行', '中止'],
+              defaultId: 0,
+              cancelId: 1,
+            });
+            if (choice.response !== 0) stopped = true;
+          });
         }
       }
     }
 
-    event.sender.send('spreadsheet:batch-progress', { type: 'done', total, stopped });
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    await dialogChain;
+
+    event.sender.send('spreadsheet:batch-progress', {
+      type: 'done',
+      total,
+      completed,
+      errorCount,
+      stopped,
+      active: 0,
+      maxConcurrency: workerCount,
+    });
     return { ok: true, stopped };
   },
 );
