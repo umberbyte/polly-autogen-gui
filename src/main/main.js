@@ -283,6 +283,7 @@ ipcMain.handle(
         active += 1;
         event.sender.send('spreadsheet:batch-progress', {
           type: 'row-start',
+          completed,
           total,
           pageNumber: row.pageNumber,
           active,
