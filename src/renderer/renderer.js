@@ -21,7 +21,9 @@ const outputFormatSelect = document.getElementById('output-format');
 
 function appendLog(message) {
   logEl.textContent += `${message}\n`;
-  logEl.scrollTop = logEl.scrollHeight;
+  requestAnimationFrame(() => {
+    logEl.scrollTop = logEl.scrollHeight;
+  });
 }
 
 function updateConvertBtnState() {
