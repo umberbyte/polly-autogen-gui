@@ -16,9 +16,14 @@ const REL_TYPE_MEDIA = 'http://schemas.microsoft.com/office/2007/relationships/m
 const REL_TYPE_IMAGE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
 
 const ICON_MEDIA_PATH = 'ppt/media/pollyAudioIcon.png';
-// 1x1 transparent PNG
+// Generic play-button icon (dark circle, white triangle), 128x128 RGBA PNG
 const ICON_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  "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";
+
+const ICON_SIZE_EMU = 762000;
+const ICON_MARGIN_EMU = 137160;
+const DEFAULT_SLIDE_WIDTH_EMU = 12192000;
+const DEFAULT_SLIDE_HEIGHT_EMU = 6858000;
 
 const ADVANCE_MARGIN_MS = 3000;
 
@@ -79,6 +84,21 @@ async function getOrderedSlideParts(zip) {
   return parts;
 }
 
+async function getSlideSize(zip) {
+  const presentationXml = await zip.file('ppt/presentation.xml').async('string');
+  const presDoc = parseXml(presentationXml);
+  const sldSzNodes = presDoc.getElementsByTagNameNS(NS_P, 'sldSz');
+  if (sldSzNodes.length === 0) {
+    return { width: DEFAULT_SLIDE_WIDTH_EMU, height: DEFAULT_SLIDE_HEIGHT_EMU };
+  }
+  const cx = Number(sldSzNodes[0].getAttribute('cx'));
+  const cy = Number(sldSzNodes[0].getAttribute('cy'));
+  return {
+    width: Number.isFinite(cx) && cx > 0 ? cx : DEFAULT_SLIDE_WIDTH_EMU,
+    height: Number.isFinite(cy) && cy > 0 ? cy : DEFAULT_SLIDE_HEIGHT_EMU,
+  };
+}
+
 function ensureContentTypes(zip, contentTypesXml) {
   const doc = parseXml(contentTypesXml);
   const root = doc.documentElement;
@@ -133,10 +153,10 @@ function nextShapeId(slideDoc) {
   return max + 1;
 }
 
-function buildPicFragment({ shapeId, name, rIdAudio, rIdMedia, rIdImage }) {
+function buildPicFragment({ shapeId, name, rIdAudio, rIdMedia, rIdImage, offX, offY, size }) {
   return `<p:pic xmlns:p="${NS_P}" xmlns:a="${NS_A}" xmlns:r="${NS_R}">
   <p:nvPicPr>
-    <p:cNvPr id="${shapeId}" name="${name}" hidden="1">
+    <p:cNvPr id="${shapeId}" name="${name}">
       <a:hlinkClick r:id="" action="ppaction://media"/>
     </p:cNvPr>
     <p:cNvPicPr>
@@ -159,10 +179,10 @@ function buildPicFragment({ shapeId, name, rIdAudio, rIdMedia, rIdImage }) {
   </p:blipFill>
   <p:spPr>
     <a:xfrm>
-      <a:off x="0" y="0"/>
-      <a:ext cx="609600" cy="609600"/>
+      <a:off x="${offX}" y="${offY}"/>
+      <a:ext cx="${size}" cy="${size}"/>
     </a:xfrm>
-    <a:prstGeom prst="rect">
+    <a:prstGeom prst="ellipse">
       <a:avLst/>
     </a:prstGeom>
   </p:spPr>
@@ -330,6 +350,9 @@ async function embedAudioIntoPptx(workingPptxPath, mp3Folder, onProgress = () =>
 
   const slideParts = await getOrderedSlideParts(zip);
   const { byPage, unparsable } = await listMp3sByPageNumber(mp3Folder);
+  const slideSize = await getSlideSize(zip);
+  const iconOffX = slideSize.width - ICON_SIZE_EMU - ICON_MARGIN_EMU;
+  const iconOffY = slideSize.height - ICON_SIZE_EMU - ICON_MARGIN_EMU;
 
   const warnings = [];
   for (const name of unparsable) {
@@ -398,6 +421,9 @@ async function embedAudioIntoPptx(workingPptxPath, mp3Folder, onProgress = () =>
             rIdAudio,
             rIdMedia,
             rIdImage,
+            offX: iconOffX,
+            offY: iconOffY,
+            size: ICON_SIZE_EMU,
           }),
         ),
       );
