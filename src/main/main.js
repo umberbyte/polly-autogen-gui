@@ -20,7 +20,7 @@ const {
 } = require('./awsCredentials');
 
 const AWS_REGION = 'ap-northeast-1';
-const BATCH_CONCURRENCY = 20;
+const BATCH_CONCURRENCY = 10;
 
 const activeBatchCancels = new Map();
 
