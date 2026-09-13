@@ -1,0 +1,814 @@
+<title>Polly Autogen 操作マニュアル</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #f6f4ee;
+    --surface: #ffffff;
+    --surface-2: #efeee4;
+    --ink: #1c2420;
+    --ink-muted: #5c6a61;
+    --border: #dddecc;
+    --border-soft: #e8e7da;
+    --accent: #0e6b57;
+    --accent-ink: #ffffff;
+    --accent-soft: #e1f1ea;
+    --accent-soft-border: #b7dccb;
+    --warn-bg: #fdf1de;
+    --warn-border: #e8c164;
+    --warn-ink: #78480a;
+    --danger-ink: #9c3b2e;
+    --danger-bg: #fbeae6;
+    --danger-border: #e7b6a9;
+    --code-bg: #eef0e3;
+    --code-border: #d7d9c5;
+    --app-accent: #005fb8;
+    --app-accent-ink: #ffffff;
+    --shadow: 0 1px 2px rgba(28,36,32,0.07), 0 10px 26px -14px rgba(28,36,32,0.22);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #11181a;
+      --surface: #171f1f;
+      --surface-2: #1d2726;
+      --ink: #ecf1ed;
+      --ink-muted: #9bb0a6;
+      --border: #2b3634;
+      --border-soft: #253030;
+      --accent: #3fceaa;
+      --accent-ink: #072019;
+      --accent-soft: #163330;
+      --accent-soft-border: #24544c;
+      --warn-bg: #2a2210;
+      --warn-border: #6b511f;
+      --warn-ink: #e9bd5c;
+      --danger-ink: #f0998a;
+      --danger-bg: #2c1c19;
+      --danger-border: #6b3a30;
+      --code-bg: #1b2422;
+      --code-border: #2e3936;
+      --app-accent: #57a6ff;
+      --app-accent-ink: #061524;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 34px -16px rgba(0,0,0,0.65);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #11181a;
+    --surface: #171f1f;
+    --surface-2: #1d2726;
+    --ink: #ecf1ed;
+    --ink-muted: #9bb0a6;
+    --border: #2b3634;
+    --border-soft: #253030;
+    --accent: #3fceaa;
+    --accent-ink: #072019;
+    --accent-soft: #163330;
+    --accent-soft-border: #24544c;
+    --warn-bg: #2a2210;
+    --warn-border: #6b511f;
+    --warn-ink: #e9bd5c;
+    --danger-ink: #f0998a;
+    --danger-bg: #2c1c19;
+    --danger-border: #6b3a30;
+    --code-bg: #1b2422;
+    --code-border: #2e3936;
+    --app-accent: #57a6ff;
+    --app-accent-ink: #061524;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 34px -16px rgba(0,0,0,0.65);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+    text-wrap: balance;
+    line-height: 1.4;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  a { color: inherit; }
+
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 20px;
+    gap: 40px;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    flex: 0 0 252px;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 28px 4px 28px 0;
+    scrollbar-width: thin;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 16px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .sidebar-brand .mark {
+    width: 30px; height: 30px; flex: none;
+    border-radius: 8px;
+    background: var(--accent);
+    display: grid; place-items: center;
+  }
+  .sidebar-brand .mark svg { width: 16px; height: 16px; }
+  .sidebar-brand .name {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: 0.01em;
+  }
+  .sidebar-brand .name small {
+    display: block;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-weight: 500;
+    font-size: 0.66rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+  }
+
+  nav.toc { display: flex; flex-direction: column; gap: 1px; }
+  nav.toc a {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    text-decoration: none;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 0.86rem;
+    color: var(--ink-muted);
+    transition: background .15s ease, color .15s ease;
+  }
+  nav.toc a .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    flex: none;
+    width: 2.2em;
+  }
+  nav.toc a.sub { padding-left: 30px; font-size: 0.8rem; }
+  nav.toc a.sub .num { width: 2.6em; }
+  nav.toc a:hover { background: var(--surface-2); color: var(--ink); }
+  nav.toc a.active { background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+
+  /* ---------- Main content ---------- */
+  .content { flex: 1 1 auto; min-width: 0; padding-block: 40px 80px; }
+
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 40px clamp(20px, 5vw, 48px);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .hero .eyebrow {
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .hero h1 { font-size: clamp(1.7rem, 3.4vw, 2.35rem); margin-top: 10px; font-weight: 800; }
+  .hero p.lead {
+    max-width: 46em;
+    color: var(--ink-muted);
+    font-size: 1.02rem;
+    margin-top: 14px;
+  }
+  .waveform { display: flex; align-items: flex-end; gap: 3px; height: 34px; margin-top: 22px; opacity: 0.85; }
+  .waveform span {
+    width: 4px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-soft-border));
+    display: block;
+  }
+
+  .meta-grid {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 20px;
+  }
+  .meta-grid .item .k { font-size: 0.72rem; color: var(--ink-muted); letter-spacing: 0.05em; }
+  .meta-grid .item .v { font-size: 0.94rem; font-weight: 700; margin-top: 3px; }
+
+  /* Quick reference stepper */
+  .quickref {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 22px clamp(18px, 4vw, 30px);
+    margin-bottom: 34px;
+  }
+  .quickref h2 { font-size: 1.02rem; margin-bottom: 4px; }
+  .quickref .hint { color: var(--ink-muted); font-size: 0.84rem; margin-bottom: 16px; }
+  .stepper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stepper a {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px 7px 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .stepper a:hover { border-color: var(--accent-soft-border); background: var(--accent-soft); }
+  .stepper a .n {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-radius: 999px;
+    width: 1.5em; height: 1.5em;
+    display: grid; place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Step sections */
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: clamp(22px, 4vw, 40px);
+    margin-bottom: 22px;
+    scroll-margin-top: 18px;
+  }
+  .step-head { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+  .step-head .badge {
+    flex: none;
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft-border);
+    color: var(--accent);
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-head h2 { font-size: 1.34rem; font-weight: 800; }
+  .step-head .sub { color: var(--ink-muted); font-size: 0.88rem; margin-top: 4px; }
+
+  .step p { max-width: 46em; }
+  .step ol, .step ul { max-width: 46em; padding-left: 1.3em; }
+  .step li { margin-bottom: 10px; }
+  .step li:last-child { margin-bottom: 0; }
+  .step ol { counter-reset: item; list-style: none; padding-left: 0; }
+  .step ol > li {
+    counter-increment: item;
+    position: relative;
+    padding-left: 2.2em;
+  }
+  .step ol > li::before {
+    content: counter(item);
+    position: absolute;
+    left: 0; top: 0.05em;
+    width: 1.6em; height: 1.6em;
+    border-radius: 7px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    color: var(--ink-muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .subsection { margin-top: 30px; padding-top: 26px; border-top: 1px dashed var(--border); }
+  .subsection h3 { font-size: 1.08rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .subsection h3 .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft-border);
+    border-radius: 6px;
+    padding: 2px 7px;
+  }
+  .subsection .sub { color: var(--ink-muted); font-size: 0.86rem; margin: 4px 0 14px; }
+
+  /* inline tokens: app button chip, path/code, field label */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 0.86em;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    background: var(--surface);
+    border: 1px solid var(--code-border);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+  }
+  .btn.primary {
+    background: var(--app-accent);
+    color: var(--app-accent-ink);
+    border-color: var(--app-accent);
+  }
+  code, .path, .field {
+    font-family: "JetBrains Mono", "Zen Kaku Gothic New", monospace, sans-serif;
+    font-size: 0.86em;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+  .field { background: transparent; border-style: dashed; }
+
+  .callout {
+    margin: 16px 0;
+    max-width: 46em;
+    padding: 14px 16px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+    font-size: 0.92rem;
+  }
+  .callout .icon { flex: none; font-size: 1.05rem; line-height: 1.6; }
+  .callout p { margin: 0; }
+  .callout.note { background: var(--surface-2); border: 1px solid var(--border-soft); color: var(--ink); }
+  .callout.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-ink); }
+  .callout.danger { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger-ink); }
+
+  .kv {
+    max-width: 46em;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.9rem;
+  }
+  .kv dt { color: var(--ink-muted); }
+  .kv dd { margin: 0; font-weight: 600; }
+
+  /* mapping diagram for step 9 */
+  .flow {
+    max-width: 46em;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0;
+  }
+  .flow .box {
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    padding: 9px 13px;
+    font-size: 0.82rem;
+  }
+  .flow .box .l { color: var(--ink-muted); font-size: 0.68rem; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+  .flow .box code { background: transparent; border: none; padding: 0; font-size: 0.95em; }
+  .flow .arrow { color: var(--accent); font-size: 1.1rem; }
+
+  footer.page-foot {
+    max-width: 46em;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+    padding: 10px 6px 0;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 880px) {
+    .layout { flex-direction: column; gap: 0; padding: 0 14px; }
+    .sidebar {
+      position: static;
+      max-height: none;
+      width: 100%;
+      padding: 16px 0;
+      overflow-x: auto;
+    }
+    .sidebar-brand { border-bottom: none; margin-bottom: 10px; }
+    nav.toc { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
+    nav.toc a { flex: none; }
+    nav.toc a.sub { padding-left: 10px; }
+    .content { padding-block: 8px 60px; }
+  }
+</style>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.6"/>
+          <path d="M6 11v1a6 6 0 0 0 12 0v-1M12 19v2" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="name">Polly Autogen<small>操作マニュアル</small></span>
+    </div>
+    <nav class="toc" id="toc">
+      <a href="#step-1"><span class="num">01</span>インストール</a>
+      <a href="#step-2"><span class="num">02</span>起動</a>
+      <a href="#step-3"><span class="num">03</span>AWSアカウントの設定</a>
+      <a href="#step-4"><span class="num">04</span>Excel台本ファイル選択</a>
+      <a href="#step-5"><span class="num">05</span>確認・編集・保存</a>
+      <a href="#step-6"><span class="num">06</span>一括変換</a>
+      <a href="#step-7"><span class="num">07</span>個別変換</a>
+      <a href="#step-8"><span class="num">08</span>PPTファイルの指定</a>
+      <a href="#step-9"><span class="num">09</span>埋め込みの実行</a>
+      <a href="#step-10"><span class="num">10</span>その他の使い方</a>
+      <a href="#step-10-1" class="sub"><span class="num">10-1</span>TXT変換</a>
+      <a href="#step-10-2" class="sub"><span class="num">10-2</span>TEXTフォルダ一括変換</a>
+      <a href="#step-10-3" class="sub"><span class="num">10-3</span>アンインストール</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+
+    <header class="hero">
+      <div class="eyebrow">User Manual — Windows</div>
+      <h1>Polly Autogen 操作マニュアル</h1>
+      <p class="lead">Excelの台本を Amazon Polly でナレーション音声に変換し、PowerPoint に自動再生の音声として埋め込むまでの一連の操作をまとめています。インストールからアンインストールまで、上のメニューから該当の章に移動できます。</p>
+      <div class="waveform" aria-hidden="true"></div>
+      <div class="meta-grid">
+        <div class="item"><div class="k">対応OS</div><div class="v">Windows 11</div></div>
+        <div class="item"><div class="k">音声合成エンジン</div><div class="v">Amazon Polly</div></div>
+        <div class="item"><div class="k">既定リージョン</div><div class="v">ap-northeast-1(固定)</div></div>
+        <div class="item"><div class="k">出力先アプリ</div><div class="v">PowerPoint(.pptx)</div></div>
+      </div>
+    </header>
+
+    <section class="quickref">
+      <h2>クイックリファレンス</h2>
+      <div class="hint">一般的な作業の流れは 1 → 9 の順です。すでに用意した .txt ファイルを直接音声化したい場合は 10 を参照してください。</div>
+      <div class="stepper">
+        <a href="#step-1"><span class="n">1</span>インストール</a>
+        <a href="#step-2"><span class="n">2</span>起動</a>
+        <a href="#step-3"><span class="n">3</span>AWS設定</a>
+        <a href="#step-4"><span class="n">4</span>Excel選択</a>
+        <a href="#step-5"><span class="n">5</span>編集・保存</a>
+        <a href="#step-6"><span class="n">6</span>一括変換</a>
+        <a href="#step-7"><span class="n">7</span>個別変換</a>
+        <a href="#step-8"><span class="n">8</span>PPT指定</a>
+        <a href="#step-9"><span class="n">9</span>埋め込み実行</a>
+        <a href="#step-10"><span class="n">10</span>その他</a>
+      </div>
+    </section>
+
+    <!-- 1 -->
+    <section class="step" id="step-1">
+      <div class="step-head">
+        <div class="badge">01</div>
+        <div>
+          <h2>インストール</h2>
+          <div class="sub">配布された実行ファイルを起動するだけの、ワンクリックインストールです</div>
+        </div>
+      </div>
+      <ol>
+        <li>配布された <code>Polly Autogen Setup *.exe</code>(例: <code>Polly Autogen Setup 1.0.0.exe</code>)をダブルクリックして実行する。</li>
+        <li>Windows のセキュリティ警告(SmartScreenなど)が表示されることがあります。表示された場合は「詳細情報」→「実行」を選ぶ。</li>
+        <li>インストールはウィザード画面の操作なしに数秒で完了する(1クリックインストール)。管理者権限は不要で、ユーザーごとにインストールされる。</li>
+        <li>完了すると、デスクトップとスタートメニューに「Polly Autogen」のショートカットが自動的に作成される。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>途中で保存先や設定を選ぶ画面はありません。ショートカットの作成まで含めて自動的に行われます。</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="step" id="step-2">
+      <div class="step-head">
+        <div class="badge">02</div>
+        <div>
+          <h2>起動</h2>
+          <div class="sub">メインウィンドウが開き、Amazon Polly の音声一覧を自動取得します</div>
+        </div>
+      </div>
+      <ol>
+        <li>デスクトップまたはスタートメニューの「Polly Autogen」アイコンをクリックする。</li>
+        <li>メインウィンドウ(タイトル「Polly Autogen GUI」)が開く。</li>
+        <li>起動と同時に、Amazon Polly から利用できる音声の一覧を自動的に取得する。取得が完了するまで <span class="btn primary">変換開始</span> ボタンは押せない(グレー表示)。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>音声一覧の取得にはインターネット接続と、次の章で設定する AWS の認証情報が必要です。未設定の場合は取得に失敗し、ログ欄にエラーが表示されます。リージョンは <code>ap-northeast-1</code>(東京)に固定されており、変更はできません。</p>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="step" id="step-3">
+      <div class="step-head">
+        <div class="badge">03</div>
+        <div>
+          <h2>AWSアカウントの設定</h2>
+          <div class="sub">Amazon Polly を呼び出すためのアクセスキーを登録します</div>
+        </div>
+      </div>
+      <p>画面最上部の「設定」セクションで、AWS のアクセスキーを登録します。</p>
+      <ol>
+        <li>「設定」セクションの <span class="btn primary">AWSアカウントの設定</span> をクリックする。</li>
+        <li>ダイアログが開く。すでに保存済みの値があれば、<span class="field">Access Key ID</span> と <span class="field">Secret Access Key</span> の欄に自動的に読み込まれる。</li>
+        <li>2つの欄に、AWS の IAM ユーザーが持つ Access Key ID と Secret Access Key をそれぞれ入力する。どちらも伏字にならないプレーンテキスト欄なので、入力後にそのまま見直せる。</li>
+        <li><span class="btn">保存</span> をクリックする。ユーザーフォルダの <code>~/.aws/credentials</code> ファイルの <code>[default]</code> セクションだけが更新され(他のプロファイルやコメントはそのまま残る)、ファイルが無ければ新規に作成される。</li>
+      </ol>
+      <div class="callout warn">
+        <span class="icon">⚠</span>
+        <p>Secret Access Key は第三者に見せたり共有したりしないでください。入力欄がマスクされない仕様のため、画面共有中の操作には注意してください。</p>
+      </div>
+      <div class="subsection">
+        <h3><span class="tag">上級者向け</span>設定ファイルを直接編集する</h3>
+        <p class="sub">複数のプロファイルを使い分けたい場合など</p>
+        <p><span class="btn">設定ファイルを編集</span> をクリックすると、<code>~/.aws/credentials</code> が OS に関連付けられたテキストエディタで開きます(ファイルをダブルクリックした場合と同じ挙動)。ファイルが存在しない場合は、空の <code>[default]</code> のひな形を作成してから開きます。</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="step" id="step-4">
+      <div class="step-head">
+        <div class="badge">04</div>
+        <div>
+          <h2>トークスクリプト(Excel)ファイル選択</h2>
+          <div class="sub">Excel の台本シートから、ページごとのテキストを取り込みます</div>
+        </div>
+      </div>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>取り込む Excel ファイルには <strong>「トークスクリプト」という名前のシート</strong>が必要です。A列にページ番号、F列に読み上げるスクリプト本文を入力しておいてください。1行目は見出し行として無視され、A列かF列のどちらかが空の行は読み込まれません。</p>
+      </div>
+      <ol>
+        <li>「台本(Excel)からテキストを作成」セクションの <span class="btn primary">Excelファイルを選択</span> をクリックする。</li>
+        <li>ファイル選択ダイアログで <code>.xlsx</code> / <code>.xls</code> ファイルを選ぶ。</li>
+        <li>Excel ファイルと同じ場所に、ファイル名と同じ名前の作業フォルダが提案される。同名フォルダが既にある場合は、既存フォルダを誤って上書きしないよう <code>(2)</code> <code>(3)</code> … と自動的に別名になる。</li>
+        <li>「作業フォルダを選択してください」という確認ダイアログが表示されるので <span class="btn">OK</span> を押す。</li>
+        <li>続けて開くフォルダ選択ダイアログで、提案されたフォルダのまま確定するか、別のフォルダに変更して確定する。</li>
+        <li>「トークスクリプト」シートが解析され、次の章で説明する編集画面が自動的に開く。</li>
+      </ol>
+      <div class="subsection">
+        <h3><span class="tag">2回目以降</span>作業フォルダを開く</h3>
+        <p class="sub">一度取り込んだ台本を Excel なしで再編集したいとき</p>
+        <p>「台本(Excel)からテキストを作成」セクションの <span class="btn primary">作業フォルダを開く</span> をクリックし、以前作成した作業フォルダを選ぶと、その中の <code>text</code> フォルダの内容を読み込んで同じ編集画面を開けます。Excel ファイルは不要です。<code>text</code> フォルダ自体を選んでしまった場合は、一つ上の階層を作業フォルダとして自動的に読み替えます。<code>text</code> フォルダが見つからない、または中身が空の場合は、画面上に理由が警告として表示されます。</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="step" id="step-5">
+      <div class="step-head">
+        <div class="badge">05</div>
+        <div>
+          <h2>スクリプトの確認と編集、保存</h2>
+          <div class="sub">「トークスクリプト編集」画面で内容を見直し、テキストファイルとして書き出します</div>
+        </div>
+      </div>
+      <p>前の章の操作で「トークスクリプト編集」という別ウィンドウが開きます。メイン画面はブロックされず、並行して操作できます。画面上部には、現在保存されている Polly の音声設定が表示されます(例:「現在の Polly 出力設定:日本語(ja-JP)、neural、Tomoko」)。</p>
+      <p>表は <span class="field">ページ番号</span>(読み取り専用)・<span class="field">トークスクリプト</span>・<span class="field">操作</span>(再生・生成)の3列です。</p>
+      <ol>
+        <li>内容を確認・修正したい行の「トークスクリプト」のセルをクリックする。</li>
+        <li>テキストエリアを持つ編集ダイアログが開くので、内容を書き換えて <span class="btn">OK</span> を押す。この時点ではまだファイルには書き込まれず、画面上のデータだけが更新される。</li>
+        <li>すべての行を確認し終えたら、ツールバーの <span class="btn primary">保存</span> をクリックする。</li>
+        <li>その時点の全行が <code>&lt;作業フォルダ&gt;/text/&lt;作業フォルダ名&gt;_&lt;ページ番号&gt;.txt</code> として書き出される(既存ファイルは無条件に上書きされる)。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>ページ番号の列はこの画面からは編集できません。番号を直したい場合は Excel 側の値を修正し、4章の手順をやり直してください。また、シート上で削除した行があっても、以前に書き出し済みの <code>.txt</code> ファイルは自動では削除されません。</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="step" id="step-6">
+      <div class="step-head">
+        <div class="badge">06</div>
+        <div>
+          <h2>一括変換</h2>
+          <div class="sub">編集した全ページのスクリプトを、まとめて音声化します</div>
+        </div>
+      </div>
+      <ol>
+        <li>「トークスクリプト編集」画面の <span class="btn primary">一括音声出力</span> をクリックする。</li>
+        <li>まず自動的に現在の内容が 5章と同じ形で <code>text</code> フォルダへ保存される(表示中のテキストと生成される音声が必ず一致するようにするため)。</li>
+        <li>対象のいずれかのページに mp3 が既に存在する場合、「既存のmp3ファイルを上書きします。よろしいですか?」という確認ダイアログが表示される。<span class="btn">OK</span> で続行、<span class="btn">中止</span> で何も上書きせず処理を終了する(直前のテキスト保存はそのまま残る)。</li>
+        <li>最大10件まで同時並行で Amazon Polly に音声合成をリクエストし、<code>&lt;作業フォルダ&gt;/mp3/&lt;作業フォルダ名&gt;_&lt;ページ番号&gt;.mp3</code> として書き出す。ボタン横には <code>[完了数/全体数]</code> の進捗が表示される。</li>
+        <li>途中でやめたい場合は、表示される <span class="btn">中止</span> ボタンをクリックする。実行中のリクエストが終わった時点で処理が打ち切られる。</li>
+        <li>いずれかのページでエラーが発生すると、その都度エラー内容を示すダイアログが表示され、<span class="btn">続行</span> か <span class="btn">中止</span> を選べる。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>一括音声出力の出力形式は常に mp3 固定です(メイン画面の Output Format 設定とは連動しません)。生成が完了した行は、その場で <span class="btn">再生</span> ボタンが使えるようになります。</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="step" id="step-7">
+      <div class="step-head">
+        <div class="badge">07</div>
+        <div>
+          <h2>個別変換</h2>
+          <div class="sub">1ページだけ音声を作り直す、または再生して確認します</div>
+        </div>
+      </div>
+      <ol>
+        <li>「トークスクリプト編集」画面で、対象行の <span class="btn">生成</span> ボタンをクリックする。</li>
+        <li>その行だけが自動的に保存された上で音声化され、<code>&lt;作業フォルダ&gt;/mp3/&lt;作業フォルダ名&gt;_&lt;ページ番号&gt;.mp3</code> が上書き(または新規作成)される。1件だけの明示的な操作のため、上書き確認ダイアログは表示されない。</li>
+        <li>生成が終わると、同じ行の <span class="btn">再生</span> ボタンが使えるようになる。クリックするとその場で音声を再生して確認できる。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>対応する mp3 がまだ無い行では、<span class="btn">再生</span> ボタンは灰色表示で押せません。</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="step" id="step-8">
+      <div class="step-head">
+        <div class="badge">08</div>
+        <div>
+          <h2>PPTファイルの指定</h2>
+          <div class="sub">音声を埋め込む先の PowerPoint ファイルと、mp3 の場所を指定します</div>
+        </div>
+      </div>
+      <p>メインウィンドウ(トークスクリプト編集画面ではなく最初の画面)の「PowerPointへの音声埋め込み」セクションで操作します。</p>
+      <ol>
+        <li><span class="btn primary">PowerPointファイルを選択</span> をクリックし、埋め込み先の <code>.pptx</code> ファイルを選ぶ。</li>
+        <li>選択すると同時に、同じフォルダ内に <code>&lt;元のファイル名&gt;_音声埋め込み.pptx</code> という処理用コピーが自動的に作成される(既に同名のコピーがあれば上書き)。元の pptx ファイルは一切変更されない。</li>
+        <li>ボタンの隣に赤字で元ファイル名と出力先ファイル名が表示される。以降の作業はすべてこの処理用コピーに対して行われる。</li>
+        <li><span class="btn primary">MP3フォルダを指定</span> をクリックし、埋め込みたい mp3 が入っているフォルダ(通常は6章で作成した <code>&lt;作業フォルダ&gt;/mp3</code>)を選ぶ。</li>
+      </ol>
+    </section>
+
+    <!-- 9 -->
+    <section class="step" id="step-9">
+      <div class="step-head">
+        <div class="badge">09</div>
+        <div>
+          <h2>埋め込みの実行</h2>
+          <div class="sub">スライドの表示順とページ番号を突き合わせ、自動再生の音声として書き込みます</div>
+        </div>
+      </div>
+      <p>前章の2つ(PowerPointファイルと MP3フォルダ)が両方指定されていると、<span class="btn primary">音声を埋め込む</span> ボタンが押せるようになります。対応付けは「スライドが何番目に表示されるか」と「mp3ファイル名末尾のページ番号」の一致で決まります。</p>
+      <div class="flow">
+        <div class="box"><span class="l">表示順 3番目のスライド</span><code>slide?.xml</code></div>
+        <span class="arrow">↔</span>
+        <div class="box"><span class="l">ページ番号が一致</span><code>&hellip;_3.mp3</code></div>
+      </div>
+      <ol>
+        <li><span class="btn primary">音声を埋め込む</span> をクリックする。</li>
+        <li>各スライドについて、対応する mp3 の再生時間を取得 → 音声を埋め込む(再生アイコンなどの見た目は一切表示されない)→ スライドの自動送り時間を「音声の長さ + 3秒」に設定、という処理が1枚ずつ行われる。</li>
+        <li>ボタン横に <code>[現在/全体]</code> の進捗が表示され、完了すると「処理完了」と表示される。</li>
+        <li>処理が終わると、出力された <code>_音声埋め込み.pptx</code> の場所がエクスプローラーで自動的に開く。</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">ⓘ</span>
+        <p>対応する mp3 が無いスライド、対応するスライドが無い mp3、ページ番号を読み取れない mp3 はそれぞれスキップされ、ログ欄に警告として表示されます(1件のスキップやエラーで全体は止まりません)。すでにアニメーション設定を持つスライドには自動再生の追加をスキップし、警告を表示します(音声自体は埋め込まれるため、必要であれば PowerPoint 側で自動再生を手動設定できます)。</p>
+      </div>
+      <div class="callout warn">
+        <span class="icon">⚠</span>
+        <p>生成された pptx を PowerPoint で開いた際に「修復が必要」という表示が出ることがあります。その場合も音声の埋め込み自体は保持されることが多く、自動再生の設定だけが失われている可能性があります。スライドショーのタイミング設定を PowerPoint 側で確認・再設定してください。</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="step" id="step-10">
+      <div class="step-head">
+        <div class="badge">10</div>
+        <div>
+          <h2>その他の使い方</h2>
+          <div class="sub">Excel を使わず、すでに用意した .txt ファイルを直接音声化する方法とアンインストール</div>
+        </div>
+      </div>
+      <p>メイン画面の「ファイルまたはフォルダから音声出力」セクションでは、Excel の台本を経由せず、手元にある <code>.txt</code> ファイルをそのまま Amazon Polly で音声化できます。Language Code・Engine・Voice ID・Output Format の選び方は共通です。</p>
+      <div class="kv">
+        <dt>Language Code</dt><dd>既定値 日本語(ja-JP)。実在する言語のみプルダウンに表示</dd>
+        <dt>Engine</dt><dd>既定値 neural。選んだ Language Code に対応するものだけ表示</dd>
+        <dt>Voice ID</dt><dd>既定値 Tomoko。Language Code と Engine の両方に対応するものだけ表示</dd>
+        <dt>Output Format</dt><dd>既定値 mp3。mp3 / ogg_vorbis / pcm から選択</dd>
+      </div>
+      <p class="sub" style="margin-top:-4px;">上から順に選択肢が絞り込まれるため、存在しない組み合わせは選べません。一覧は <span class="btn">音声一覧を再取得</span> で最新の状態に更新できます。</p>
+
+      <div class="subsection" id="step-10-1">
+        <h3><span class="tag">10-1</span>TXTファイルの指定と変換</h3>
+        <p class="sub">.txt ファイルを1つだけ音声化する</p>
+        <ol>
+          <li><span class="btn primary">TXTファイルを選択</span> をクリックし、変換したい <code>.txt</code> ファイルを1つ選ぶ。</li>
+          <li>必要に応じて Language Code・Engine・Voice ID・Output Format を選ぶ。</li>
+          <li><span class="btn primary">変換開始</span> をクリックする(音声一覧の取得が完了し、ファイルが選ばれていないと押せない)。</li>
+          <li><code>&lt;選んだファイルと同じフォルダ&gt;/mp3/&lt;元のファイル名&gt;.&lt;拡張子&gt;</code> として出力される。拡張子は選んだ Output Format により mp3 / ogg / pcm に変わるが、出力先のフォルダ名は常に <code>mp3</code>。既に同名ファイルがある場合は上書きされる。</li>
+        </ol>
+        <div class="callout note">
+          <span class="icon">ⓘ</span>
+          <p>長い文章は 2900文字を目安に、句点・感嘆符・疑問符・改行の直後で自動的に分割して Polly に送信し、結果を1つの音声ファイルに結合します。</p>
+        </div>
+      </div>
+
+      <div class="subsection" id="step-10-2">
+        <h3><span class="tag">10-2</span>TEXTフォルダの指定と一括変換</h3>
+        <p class="sub">フォルダ内の .txt ファイルをまとめて音声化する</p>
+        <ol>
+          <li><span class="btn primary">TEXTフォルダを選択</span> をクリックし、<code>.txt</code> ファイルが入ったフォルダを選ぶ。</li>
+          <li>必要に応じてオプションを選び、<span class="btn primary">変換開始</span> をクリックする。</li>
+          <li>フォルダ内のすべての <code>.txt</code> ファイルが対象になる。ファイルごとに「変換中 → 完了 / エラー」の状態が一覧表示され、画面上部に <code>[i/全体数]</code> の進捗が表示される。</li>
+          <li>1件のファイルでエラーが起きても処理は止まらず、次のファイルの変換に進む。</li>
+        </ol>
+      </div>
+
+      <div class="subsection" id="step-10-3">
+        <h3><span class="tag">10-3</span>アンインストール</h3>
+        <p class="sub">Windows標準の方法でアプリを削除する</p>
+        <ol>
+          <li>Windows の「設定」→「アプリ」→「インストールされているアプリ」(または「コントロールパネル」→「プログラムのアンインストール」)を開く。</li>
+          <li>一覧から「Polly Autogen」を探して選択し、アンインストールを実行する。</li>
+          <li>アンインストール時、音声設定や編集画面の表示位置などアプリ内部の設定データもあわせて自動的に削除される。</li>
+        </ol>
+        <div class="callout warn">
+          <span class="icon">⚠</span>
+          <p>次のものはアンインストールしても削除されません。残しておきたい場合は事前に別の場所へコピーしてください:<br>
+          ・<code>~/.aws/credentials</code> に保存した AWS のアクセスキー(3章で入力した内容)<br>
+          ・Excel から作成した作業フォルダ、書き出した <code>.txt</code> / <code>.mp3</code> ファイル<br>
+          ・音声を埋め込んだ <code>_音声埋め込み.pptx</code></p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      対応OS: Windows 11 ／ 対象バージョン: 1.0.0 ／ 最終更新: 2026年9月13日
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  // waveform bars
+  (function () {
+    var wf = document.querySelector('.waveform');
+    if (!wf) return;
+    var heights = [10,18,26,14,32,20,28,12,24,34,16,22,30,18,12,26,20,14,24,10];
+    heights.forEach(function (h) {
+      var span = document.createElement('span');
+      span.style.height = h + 'px';
+      wf.appendChild(span);
+    });
+  })();
+
+  // active TOC highlighting
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var map = {};
+    links.forEach(function (a) {
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if (el) map[id] = a;
+    });
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var a = map[entry.target.id];
+        if (!a) return;
+        if (entry.isIntersecting) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+    Object.keys(map).forEach(function (id) {
+      observer.observe(document.getElementById(id));
+    });
+  })();
+</script>
