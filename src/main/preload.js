@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('pollyAutogen', {
   selectPptxFile: () => ipcRenderer.invoke('dialog:select-pptx-file'),
   preparePptxWorkingCopy: (pptxPath) => ipcRenderer.invoke('pptx:prepare-working-copy', { pptxPath }),
   embedAudioToPptx: (payload) => ipcRenderer.invoke('pptx:embed-audio', payload),
+  showItemInFolder: (filePath) => ipcRenderer.invoke('shell:show-item-in-folder', filePath),
   onPptxEmbedProgress: (callback) => {
     ipcRenderer.on('pptx:embed-progress', (event, data) => callback(data));
   },

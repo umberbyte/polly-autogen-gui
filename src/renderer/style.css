@@ -351,6 +351,7 @@ dialog .field {
 .pptx-file-label {
   color: var(--danger);
   font-weight: 600;
+  white-space: pre-line;
 }
 
 .path-label {

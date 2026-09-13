@@ -115,7 +115,7 @@ document.getElementById('select-pptx-btn').addEventListener('click', async () =>
     return;
   }
   state.pptxWorkingPath = result.workingPath;
-  pptxFileLabel.textContent = result.fileName;
+  pptxFileLabel.textContent = `元ファイル: ${result.originalFileName}\n出力先ファイル: ${result.fileName}`;
   appendLog(`処理用コピーを作成しました: ${result.workingPath}`);
   updateEmbedBtnState();
 });
@@ -142,6 +142,7 @@ embedAudioBtn.addEventListener('click', async () => {
     } else {
       appendLog(`音声埋め込みが完了しました(${result.embeddedCount}件): ${state.pptxWorkingPath}`);
       (result.warnings || []).forEach((warning) => appendLog(`警告: ${warning}`));
+      window.pollyAutogen.showItemInFolder(state.pptxWorkingPath);
     }
   } catch (error) {
     appendLog(`音声埋め込みに失敗しました: ${error.message || error}`);
@@ -161,7 +162,7 @@ window.pollyAutogen.onPptxEmbedProgress((progress) => {
       embedProgressEl.textContent = `[${progress.index}/${progress.total}]`;
       break;
     case 'done':
-      embedProgressEl.textContent = `[${progress.total}/${progress.total}]`;
+      embedProgressEl.textContent = '処理完了';
       break;
     default:
       break;

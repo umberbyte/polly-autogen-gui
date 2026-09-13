@@ -380,10 +380,20 @@ ipcMain.handle('dialog:select-pptx-file', async (event) => {
 ipcMain.handle('pptx:prepare-working-copy', async (event, { pptxPath }) => {
   try {
     const workingPath = await createWorkingCopy(pptxPath);
-    return { ok: true, workingPath, fileName: path.basename(workingPath) };
+    return {
+      ok: true,
+      workingPath,
+      fileName: path.basename(workingPath),
+      originalFileName: path.basename(pptxPath),
+    };
   } catch (error) {
     return { ok: false, error: error.message || String(error) };
   }
+});
+
+ipcMain.handle('shell:show-item-in-folder', (event, filePath) => {
+  shell.showItemInFolder(filePath);
+  return { ok: true };
 });
 
 ipcMain.handle('pptx:embed-audio', async (event, { workingPath, mp3Folder }) => {
