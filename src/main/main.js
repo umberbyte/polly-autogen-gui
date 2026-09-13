@@ -164,6 +164,14 @@ ipcMain.handle('excel:start-import', async (event, { excelPath }) => {
     return { ok: false, error: error.message || String(error) };
   }
 
+  if (proposedFolder !== baseFolder) {
+    await dialog.showMessageBox(win, {
+      type: 'info',
+      message: `既に同じファイルで作業フォルダが生成されているため、${path.basename(proposedFolder)}フォルダを作成しました。`,
+      buttons: ['OK'],
+    });
+  }
+
   await dialog.showMessageBox(win, {
     type: 'info',
     message: '作業フォルダを選択してください',
