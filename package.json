@@ -33,7 +33,13 @@
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "azureSignOptions": {
+        "publisherName": "hogefuga.org",
+        "endpoint": "https://jpe.codesigning.azure.net",
+        "codeSigningAccountName": "jp-sugawara",
+        "certificateProfileName": "polly-autogen"
+      }
     }
   }
 }
