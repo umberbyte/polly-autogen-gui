@@ -3,8 +3,9 @@ const path = require('node:path');
 const ExcelJS = require('exceljs');
 
 const TALK_SCRIPT_SHEET_NAME = 'トークスクリプト';
-const PAGE_NUMBER_COLUMN = 1; // A
-const SCRIPT_COLUMN = 6; // F
+const HEADER_SCAN_ROWS = 10;
+const PAGE_NUMBER_HEADER = 'ページ';
+const SCRIPT_HEADER = 'トークスクリプト';
 
 function cellValueToString(value) {
   if (value === null || value === undefined) return '';
@@ -20,6 +21,24 @@ function cellValueToString(value) {
   return String(value).trim();
 }
 
+function findHeaderColumns(sheet) {
+  const scanRows = Math.min(HEADER_SCAN_ROWS, sheet.rowCount);
+  for (let rowNumber = 1; rowNumber <= scanRows; rowNumber += 1) {
+    const row = sheet.getRow(rowNumber);
+    let pageColumn = null;
+    let scriptColumn = null;
+    for (let col = 1; col <= sheet.columnCount; col += 1) {
+      const text = cellValueToString(row.getCell(col).value).trim();
+      if (pageColumn === null && text === PAGE_NUMBER_HEADER) pageColumn = col;
+      if (scriptColumn === null && text.includes(SCRIPT_HEADER)) scriptColumn = col;
+    }
+    if (pageColumn !== null && scriptColumn !== null) {
+      return { headerRow: rowNumber, pageColumn, scriptColumn };
+    }
+  }
+  return null;
+}
+
 async function parseTalkScriptSheet(excelPath) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(excelPath);
@@ -29,11 +48,18 @@ async function parseTalkScriptSheet(excelPath) {
     throw new Error(`シート「${TALK_SCRIPT_SHEET_NAME}」が見つかりません`);
   }
 
+  const header = findHeaderColumns(sheet);
+  if (!header) {
+    throw new Error(
+      `シート「${TALK_SCRIPT_SHEET_NAME}」内に「${PAGE_NUMBER_HEADER}」列と「${SCRIPT_HEADER}」列のヘッダーが見つかりませんでした`,
+    );
+  }
+
   const rows = [];
-  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
+  for (let rowNumber = header.headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
     const row = sheet.getRow(rowNumber);
-    const pageNumber = cellValueToString(row.getCell(PAGE_NUMBER_COLUMN).value).trim();
-    const script = cellValueToString(row.getCell(SCRIPT_COLUMN).value).trim();
+    const pageNumber = cellValueToString(row.getCell(header.pageColumn).value).trim();
+    const script = cellValueToString(row.getCell(header.scriptColumn).value).trim();
     if (!/^\d+$/.test(pageNumber) || !script) continue;
     rows.push({ pageNumber, script });
   }
