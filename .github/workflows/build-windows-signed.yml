@@ -28,7 +28,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and sign
-        run: npx electron-builder --win
+        run: npx electron-builder --win --publish never
 
       - name: Upload signed installer
         uses: actions/upload-artifact@v4
