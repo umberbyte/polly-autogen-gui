@@ -57,6 +57,16 @@ body {
   margin-bottom: 12px;
 }
 
+#batch-rate-select {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: #ffffff;
+  color: var(--text);
+}
+
 #working-folder-label {
   flex: 1;
   min-width: 160px;

@@ -59,6 +59,8 @@ const saveBtn = document.getElementById('save-btn');
 const batchGenerateBtn = document.getElementById('batch-generate-btn');
 const batchCancelBtn = document.getElementById('batch-cancel-btn');
 const batchProgressEl = document.getElementById('batch-progress');
+const batchRateSelect = document.getElementById('batch-rate-select');
+const batchRateApplyBtn = document.getElementById('batch-rate-apply-btn');
 const editDialog = document.getElementById('edit-dialog');
 const editTextarea = document.getElementById('edit-textarea');
 const editCancelBtn = document.getElementById('edit-cancel-btn');
@@ -120,6 +122,20 @@ audioPlayer.addEventListener('error', () => {
 // actual synthesis happens only at send time (see main/polly.js).
 
 const PROSODY_PATTERN = /<prosody rate="(\d+)%">([\s\S]*?)<\/prosody>/g;
+
+// Wraps a whole row's script in a single top-level <prosody> tag (used by
+// the batch "全行に適用" rate control). If the script is already nothing
+// but one such wrapping tag, replace its rate instead of nesting again, so
+// repeated bulk-apply calls stay idempotent rather than growing deeper.
+function wrapEntireScriptInRate(script, ratePercent) {
+  const prosodyOpenCount = (script.match(/<prosody rate="\d+%">/g) || []).length;
+  const isSingleFullWrap =
+    prosodyOpenCount === 1 && /^<prosody rate="\d+%">/.test(script) && script.endsWith('</prosody>');
+  const inner = isSingleFullWrap
+    ? script.replace(/^<prosody rate="\d+%">/, '').replace(/<\/prosody>$/, '')
+    : script;
+  return `<prosody rate="${ratePercent}%">${inner}</prosody>`;
+}
 
 function escapeHtml(text) {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -493,6 +509,38 @@ batchCancelBtn.addEventListener('click', () => {
   batchCancelBtn.disabled = true;
   setStatus('中止要求を送信しました。処理中のリクエストの完了を待っています...');
   window.spreadsheetAPI.cancelBatchGenerate();
+});
+
+batchRateApplyBtn.addEventListener('click', async () => {
+  const rate = Number(batchRateSelect.value);
+  if (!Number.isFinite(rate) || rate <= 0) {
+    setStatus('再生速度を選択してください');
+    return;
+  }
+  if (state.rows.length === 0) return;
+
+  batchRateApplyBtn.disabled = true;
+  setStatus(`全${state.rows.length}行に再生速度${rate}%を適用しています...`);
+  try {
+    state.rows.forEach((row) => {
+      row.script = wrapEntireScriptInRate(row.script, rate);
+    });
+    const result = await window.spreadsheetAPI.save({
+      workingFolder: state.workingFolder,
+      prefix: state.prefix,
+      rows: state.rows,
+    });
+    state.rows.forEach((row) => {
+      row.dirty = false;
+    });
+    renderRows();
+    setStatus(`全${result.count}行に再生速度${rate}%を適用し、テキストファイルに保存しました`);
+  } catch (error) {
+    setStatus(`再生速度の一括適用に失敗しました: ${error.message || error}`);
+  } finally {
+    batchRateApplyBtn.disabled = false;
+    batchRateSelect.value = '';
+  }
 });
 
 function formatBatchProgress(progress) {
