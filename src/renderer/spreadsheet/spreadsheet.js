@@ -173,10 +173,55 @@ function removeSpanTag(span) {
   editTextarea.normalize();
 }
 
+const WORD_BOUNDARY_PATTERN = /[\s。、！？.,!?\n]/;
+
+function getRangeAtPoint(x, y) {
+  let range = null;
+  if (document.caretRangeFromPoint) {
+    range = document.caretRangeFromPoint(x, y);
+  } else if (document.caretPositionFromPoint) {
+    const pos = document.caretPositionFromPoint(x, y);
+    if (pos) {
+      range = document.createRange();
+      range.setStart(pos.offsetNode, pos.offset);
+      range.collapse(true);
+    }
+  }
+  if (!range || !editTextarea.contains(range.startContainer)) return null;
+  return range;
+}
+
+const WORD_EXPAND_LIMIT = 20; // max chars to expand in each direction; Japanese text often has no
+// whitespace/punctuation boundaries at all, so without a cap this could swallow the entire script.
+
+function expandRangeToWord(range) {
+  const container = range.startContainer;
+  if (container.nodeType !== Node.TEXT_NODE) return null;
+  const text = container.textContent;
+  let start = range.startOffset;
+  let end = range.startOffset;
+  let steps = 0;
+  while (start > 0 && !WORD_BOUNDARY_PATTERN.test(text[start - 1]) && steps < WORD_EXPAND_LIMIT) {
+    start -= 1;
+    steps += 1;
+  }
+  steps = 0;
+  while (end < text.length && !WORD_BOUNDARY_PATTERN.test(text[end]) && steps < WORD_EXPAND_LIMIT) {
+    end += 1;
+    steps += 1;
+  }
+  if (start === end) return null;
+  const wordRange = document.createRange();
+  wordRange.setStart(container, start);
+  wordRange.setEnd(container, end);
+  return wordRange;
+}
+
 editTextarea.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+
   const spanTarget = event.target.closest ? event.target.closest('.ssml-rate') : null;
   if (spanTarget) {
-    event.preventDefault();
     ssmlMenuTarget = { mode: 'edit', span: spanTarget };
     ssmlRateInput.value = spanTarget.dataset.rate;
     ssmlRateRemoveBtn.hidden = false;
@@ -185,16 +230,23 @@ editTextarea.addEventListener('contextmenu', (event) => {
   }
 
   const selection = window.getSelection();
+  let range = null;
   if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    if (editTextarea.contains(range.commonAncestorContainer)) {
-      event.preventDefault();
-      ssmlMenuTarget = { mode: 'apply', range: range.cloneRange() };
-      ssmlRateInput.value = '';
-      ssmlRateRemoveBtn.hidden = true;
-      showSsmlContextMenu(event.clientX, event.clientY);
+    const selRange = selection.getRangeAt(0);
+    if (editTextarea.contains(selRange.commonAncestorContainer)) {
+      range = selRange.cloneRange();
     }
   }
+  if (!range) {
+    const pointRange = getRangeAtPoint(event.clientX, event.clientY);
+    range = pointRange ? expandRangeToWord(pointRange) : null;
+  }
+
+  if (!range) return;
+  ssmlMenuTarget = { mode: 'apply', range };
+  ssmlRateInput.value = '';
+  ssmlRateRemoveBtn.hidden = true;
+  showSsmlContextMenu(event.clientX, event.clientY);
 });
 
 ssmlContextMenu.querySelectorAll('.ssml-menu-presets button').forEach((btn) => {
