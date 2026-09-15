@@ -48,6 +48,7 @@ const state = {
   rows: [],
   editingIndex: null,
   voiceSettings: null,
+  playingPageNumber: null,
 };
 
 const voiceSettingsLabel = document.getElementById('voice-settings-label');
@@ -93,6 +94,25 @@ function toFileUrl(filePath) {
 function mp3PathFor(row) {
   return `${state.workingFolder}/mp3/${state.prefix}_${row.pageNumber}.mp3`;
 }
+
+function stopPlayback() {
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+  state.playingPageNumber = null;
+  renderRows();
+}
+
+audioPlayer.addEventListener('ended', () => {
+  state.playingPageNumber = null;
+  renderRows();
+});
+
+audioPlayer.addEventListener('error', () => {
+  if (state.playingPageNumber !== null) {
+    state.playingPageNumber = null;
+    renderRows();
+  }
+});
 
 // ---- SSML (<prosody rate="N%">...</prosody>) helpers ----
 // Storage format (row.script / .txt files) keeps raw, human-readable text with
@@ -310,12 +330,19 @@ function renderRows() {
     const actionsCell = document.createElement('td');
     actionsCell.className = 'actions-col';
 
+    const isPlaying = state.playingPageNumber === row.pageNumber;
     const playBtn = document.createElement('button');
-    playBtn.textContent = '再生';
+    playBtn.textContent = isPlaying ? '停止' : '再生';
     playBtn.disabled = !row.hasMp3;
     playBtn.addEventListener('click', () => {
-      audioPlayer.src = toFileUrl(mp3PathFor(row));
-      audioPlayer.play();
+      if (state.playingPageNumber === row.pageNumber) {
+        stopPlayback();
+      } else {
+        audioPlayer.src = toFileUrl(mp3PathFor(row));
+        audioPlayer.play();
+        state.playingPageNumber = row.pageNumber;
+        renderRows();
+      }
     });
     actionsCell.appendChild(playBtn);
 
