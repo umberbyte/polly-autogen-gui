@@ -63,6 +63,10 @@ const editTextarea = document.getElementById('edit-textarea');
 const editCancelBtn = document.getElementById('edit-cancel-btn');
 const editOkBtn = document.getElementById('edit-ok-btn');
 const audioPlayer = document.getElementById('audio-player');
+const ssmlContextMenu = document.getElementById('ssml-context-menu');
+const ssmlRateInput = document.getElementById('ssml-rate-input');
+const ssmlRateApplyBtn = document.getElementById('ssml-rate-apply');
+const ssmlRateRemoveBtn = document.getElementById('ssml-rate-remove');
 
 function setStatus(message) {
   statusEl.textContent = message;
@@ -90,6 +94,151 @@ function mp3PathFor(row) {
   return `${state.workingFolder}/mp3/${state.prefix}_${row.pageNumber}.mp3`;
 }
 
+// ---- SSML (<prosody rate="N%">...</prosody>) helpers ----
+// Storage format (row.script / .txt files) keeps raw, human-readable text with
+// literal <prosody> tags inserted around rate-adjusted spans. XML-escaping for
+// actual synthesis happens only at send time (see main/polly.js).
+
+const PROSODY_PATTERN = /<prosody rate="(\d+)%">([\s\S]*?)<\/prosody>/g;
+
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function scriptToEditorHtml(script) {
+  let html = '';
+  let lastIndex = 0;
+  let match;
+  PROSODY_PATTERN.lastIndex = 0;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = PROSODY_PATTERN.exec(script)) !== null) {
+    html += escapeHtml(script.slice(lastIndex, match.index));
+    const rate = match[1];
+    html += `<span class="ssml-rate" data-rate="${rate}" title="再生速度 ${rate}%">${escapeHtml(match[2])}</span>`;
+    lastIndex = PROSODY_PATTERN.lastIndex;
+  }
+  html += escapeHtml(script.slice(lastIndex));
+  return html;
+}
+
+function serializeEditorNode(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  if (node.tagName === 'BR') return '\n';
+  if (node.classList && node.classList.contains('ssml-rate')) {
+    const rate = node.dataset.rate;
+    const inner = Array.from(node.childNodes).map(serializeEditorNode).join('');
+    return `<prosody rate="${rate}%">${inner}</prosody>`;
+  }
+  const inner = Array.from(node.childNodes).map(serializeEditorNode).join('');
+  return node.tagName === 'DIV' || node.tagName === 'P' ? `${inner}\n` : inner;
+}
+
+function serializeEditorContent() {
+  const text = Array.from(editTextarea.childNodes).map(serializeEditorNode).join('');
+  return text.replace(/\n$/, '');
+}
+
+let ssmlMenuTarget = null; // { mode: 'apply', range: Range } | { mode: 'edit', span: HTMLElement }
+
+function hideSsmlContextMenu() {
+  ssmlContextMenu.hidden = true;
+  ssmlMenuTarget = null;
+}
+
+function showSsmlContextMenu(x, y) {
+  ssmlContextMenu.hidden = false;
+  const menuRect = ssmlContextMenu.getBoundingClientRect();
+  const maxX = window.innerWidth - menuRect.width - 8;
+  const maxY = window.innerHeight - menuRect.height - 8;
+  ssmlContextMenu.style.left = `${Math.max(8, Math.min(x, maxX))}px`;
+  ssmlContextMenu.style.top = `${Math.max(8, Math.min(y, maxY))}px`;
+}
+
+function applyRateToRange(range, ratePercent) {
+  const span = document.createElement('span');
+  span.className = 'ssml-rate';
+  span.dataset.rate = String(ratePercent);
+  span.title = `再生速度 ${ratePercent}%`;
+  const fragment = range.extractContents();
+  span.appendChild(fragment);
+  range.insertNode(span);
+  editTextarea.normalize();
+}
+
+function removeSpanTag(span) {
+  const parent = span.parentNode;
+  while (span.firstChild) parent.insertBefore(span.firstChild, span);
+  parent.removeChild(span);
+  editTextarea.normalize();
+}
+
+editTextarea.addEventListener('contextmenu', (event) => {
+  const spanTarget = event.target.closest ? event.target.closest('.ssml-rate') : null;
+  if (spanTarget) {
+    event.preventDefault();
+    ssmlMenuTarget = { mode: 'edit', span: spanTarget };
+    ssmlRateInput.value = spanTarget.dataset.rate;
+    ssmlRateRemoveBtn.hidden = false;
+    showSsmlContextMenu(event.clientX, event.clientY);
+    return;
+  }
+
+  const selection = window.getSelection();
+  if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    if (editTextarea.contains(range.commonAncestorContainer)) {
+      event.preventDefault();
+      ssmlMenuTarget = { mode: 'apply', range: range.cloneRange() };
+      ssmlRateInput.value = '';
+      ssmlRateRemoveBtn.hidden = true;
+      showSsmlContextMenu(event.clientX, event.clientY);
+    }
+  }
+});
+
+ssmlContextMenu.querySelectorAll('.ssml-menu-presets button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    applySsmlMenuRate(Number(btn.dataset.rate));
+  });
+});
+
+ssmlRateApplyBtn.addEventListener('click', () => {
+  const rate = Number(ssmlRateInput.value);
+  if (!Number.isFinite(rate) || rate <= 0) return;
+  applySsmlMenuRate(rate);
+});
+
+ssmlRateRemoveBtn.addEventListener('click', () => {
+  if (ssmlMenuTarget && ssmlMenuTarget.mode === 'edit') {
+    removeSpanTag(ssmlMenuTarget.span);
+  }
+  hideSsmlContextMenu();
+});
+
+function applySsmlMenuRate(rate) {
+  if (!ssmlMenuTarget) return;
+  if (ssmlMenuTarget.mode === 'apply') {
+    applyRateToRange(ssmlMenuTarget.range, rate);
+  } else if (ssmlMenuTarget.mode === 'edit') {
+    ssmlMenuTarget.span.dataset.rate = String(rate);
+    ssmlMenuTarget.span.title = `再生速度 ${rate}%`;
+  }
+  hideSsmlContextMenu();
+}
+
+document.addEventListener('mousedown', (event) => {
+  if (!ssmlContextMenu.hidden && !ssmlContextMenu.contains(event.target)) {
+    hideSsmlContextMenu();
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !ssmlContextMenu.hidden) {
+    hideSsmlContextMenu();
+  }
+});
+
 function renderRows() {
   tableBody.innerHTML = '';
   state.rows.forEach((row, index) => {
@@ -102,7 +251,7 @@ function renderRows() {
 
     const scriptCell = document.createElement('td');
     scriptCell.className = 'script-cell';
-    scriptCell.textContent = row.script;
+    scriptCell.innerHTML = scriptToEditorHtml(row.script);
     scriptCell.addEventListener('click', () => openEditDialog(index));
     tr.appendChild(scriptCell);
 
@@ -123,6 +272,11 @@ function renderRows() {
     generateBtn.addEventListener('click', () => generateOneRow(index));
     actionsCell.appendChild(generateBtn);
 
+    const saveRowBtn = document.createElement('button');
+    saveRowBtn.textContent = '保存';
+    saveRowBtn.addEventListener('click', () => saveOneRow(index));
+    actionsCell.appendChild(saveRowBtn);
+
     tr.appendChild(actionsCell);
 
     tableBody.appendChild(tr);
@@ -131,21 +285,42 @@ function renderRows() {
 
 function openEditDialog(index) {
   state.editingIndex = index;
-  editTextarea.value = state.rows[index].script;
+  editTextarea.innerHTML = scriptToEditorHtml(state.rows[index].script);
   editDialog.showModal();
   editTextarea.focus();
+  try {
+    document.execCommand('defaultParagraphSeparator', false, 'br');
+  } catch {
+    // ignore if unsupported
+  }
 }
 
 editOkBtn.addEventListener('click', () => {
   if (state.editingIndex !== null) {
-    state.rows[state.editingIndex].script = editTextarea.value;
+    state.rows[state.editingIndex].script = serializeEditorContent();
     renderRows();
   }
 });
 
 editCancelBtn.addEventListener('click', () => {
+  hideSsmlContextMenu();
   editDialog.close();
 });
+
+async function saveOneRow(index) {
+  const row = state.rows[index];
+  setStatus(`ページ${row.pageNumber}を保存中...`);
+  try {
+    await window.spreadsheetAPI.save({
+      workingFolder: state.workingFolder,
+      prefix: state.prefix,
+      rows: [row],
+    });
+    setStatus(`ページ${row.pageNumber}を保存しました`);
+  } catch (error) {
+    setStatus(`ページ${row.pageNumber}の保存に失敗しました: ${error.message || error}`);
+  }
+}
 
 saveBtn.addEventListener('click', async () => {
   setStatus('保存中...');

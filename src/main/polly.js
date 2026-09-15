@@ -5,6 +5,35 @@ const { SynthesizeSpeechCommand } = require('@aws-sdk/client-polly');
 const MAX_CHUNK_LENGTH = 2900;
 const BOUNDARY_CHARS = ['。', '！', '？', '\n'];
 
+// <prosody rate="N%">...</prosody> spans inserted via the spreadsheet editor.
+// Storage (row.script / .txt files) keeps this raw and human-readable; only
+// at synthesis time do we XML-escape the surrounding plain text and wrap it
+// in <speak> for Polly's SSML input.
+const PROSODY_PATTERN = /<prosody rate="(\d+)%">([\s\S]*?)<\/prosody>/g;
+
+function containsSsml(text) {
+  return /<prosody rate="\d+%">/.test(text);
+}
+
+function escapeXmlText(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildSsmlBody(rawText) {
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  PROSODY_PATTERN.lastIndex = 0;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = PROSODY_PATTERN.exec(rawText)) !== null) {
+    result += escapeXmlText(rawText.slice(lastIndex, match.index));
+    result += `<prosody rate="${match[1]}%">${escapeXmlText(match[2])}</prosody>`;
+    lastIndex = PROSODY_PATTERN.lastIndex;
+  }
+  result += escapeXmlText(rawText.slice(lastIndex));
+  return result;
+}
+
 const OUTPUT_EXTENSIONS = {
   mp3: 'mp3',
   ogg_vorbis: 'ogg',
@@ -55,6 +84,7 @@ async function streamToBuffer(stream) {
 async function synthesizeChunk(pollyClient, text, options) {
   const command = new SynthesizeSpeechCommand({
     Text: text,
+    TextType: options.textType === 'ssml' ? 'ssml' : 'text',
     VoiceId: options.voiceId,
     Engine: options.engine,
     LanguageCode: options.languageCode,
@@ -65,6 +95,11 @@ async function synthesizeChunk(pollyClient, text, options) {
 }
 
 async function synthesizeToAudio(pollyClient, text, options) {
+  if (containsSsml(text)) {
+    const ssml = `<speak>${buildSsmlBody(text)}</speak>`;
+    return synthesizeChunk(pollyClient, ssml, { ...options, textType: 'ssml' });
+  }
+
   const chunks = splitText(text);
   const buffers = [];
   for (const chunk of chunks) {
@@ -133,4 +168,6 @@ module.exports = {
   convertTextFile,
   runConversion,
   OUTPUT_EXTENSIONS,
+  containsSsml,
+  buildSsmlBody,
 };

@@ -30,13 +30,32 @@
 
   <dialog id="edit-dialog">
     <form method="dialog">
-      <textarea id="edit-textarea" rows="10"></textarea>
+      <div id="edit-textarea" class="edit-textarea" contenteditable="true" spellcheck="false"></div>
+      <p class="edit-hint">テキストを選択して右クリックすると再生速度を設定できます。設定済み箇所は右クリックで変更・解除できます。</p>
       <div class="dialog-buttons">
         <button type="button" id="edit-cancel-btn">キャンセル</button>
         <button type="submit" id="edit-ok-btn" value="ok">OK</button>
       </div>
     </form>
   </dialog>
+
+  <div id="ssml-context-menu" class="ssml-context-menu" hidden>
+    <div class="ssml-menu-title">再生速度を設定</div>
+    <div class="ssml-menu-presets">
+      <button type="button" data-rate="50">50%</button>
+      <button type="button" data-rate="75">75%</button>
+      <button type="button" data-rate="90">90%</button>
+      <button type="button" data-rate="110">110%</button>
+      <button type="button" data-rate="125">125%</button>
+      <button type="button" data-rate="150">150%</button>
+      <button type="button" data-rate="200">200%</button>
+    </div>
+    <div class="ssml-menu-custom">
+      <input type="number" id="ssml-rate-input" min="20" max="200" step="1" placeholder="任意の%" />
+      <button type="button" id="ssml-rate-apply">適用</button>
+    </div>
+    <button type="button" id="ssml-rate-remove" class="ssml-menu-remove" hidden>タグを解除</button>
+  </div>
 
   <audio id="audio-player"></audio>
 
