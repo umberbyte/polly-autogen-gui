@@ -311,6 +311,10 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+function isAudioStale(row) {
+  return Boolean(row.hasMp3) && row.generatedScript != null && row.generatedScript !== row.script;
+}
+
 function renderRows() {
   tableBody.innerHTML = '';
   state.rows.forEach((row, index) => {
@@ -333,7 +337,7 @@ function renderRows() {
     const isPlaying = state.playingPageNumber === row.pageNumber;
     const playBtn = document.createElement('button');
     playBtn.textContent = isPlaying ? '停止' : '再生';
-    playBtn.disabled = !row.hasMp3;
+    playBtn.disabled = !row.hasMp3 || Boolean(row.generating);
     playBtn.addEventListener('click', () => {
       if (state.playingPageNumber === row.pageNumber) {
         stopPlayback();
@@ -348,11 +352,13 @@ function renderRows() {
 
     const generateBtn = document.createElement('button');
     generateBtn.textContent = '生成';
+    generateBtn.classList.toggle('needs-attention', isAudioStale(row));
     generateBtn.addEventListener('click', () => generateOneRow(index));
     actionsCell.appendChild(generateBtn);
 
     const saveRowBtn = document.createElement('button');
     saveRowBtn.textContent = '保存';
+    saveRowBtn.classList.toggle('needs-attention', Boolean(row.dirty));
     saveRowBtn.addEventListener('click', () => saveOneRow(index));
     actionsCell.appendChild(saveRowBtn);
 
@@ -376,7 +382,12 @@ function openEditDialog(index) {
 
 editOkBtn.addEventListener('click', () => {
   if (state.editingIndex !== null) {
-    state.rows[state.editingIndex].script = serializeEditorContent();
+    const row = state.rows[state.editingIndex];
+    const newScript = serializeEditorContent();
+    if (newScript !== row.script) {
+      row.script = newScript;
+      row.dirty = true;
+    }
     renderRows();
   }
 });
@@ -395,6 +406,8 @@ async function saveOneRow(index) {
       prefix: state.prefix,
       rows: [row],
     });
+    row.dirty = false;
+    renderRows();
     setStatus(`ページ${row.pageNumber}を保存しました`);
   } catch (error) {
     setStatus(`ページ${row.pageNumber}の保存に失敗しました: ${error.message || error}`);
@@ -409,6 +422,10 @@ saveBtn.addEventListener('click', async () => {
       prefix: state.prefix,
       rows: state.rows,
     });
+    state.rows.forEach((row) => {
+      row.dirty = false;
+    });
+    renderRows();
     setStatus(`保存しました(${result.count}件)`);
   } catch (error) {
     setStatus(`保存に失敗しました: ${error.message || error}`);
@@ -417,6 +434,8 @@ saveBtn.addEventListener('click', async () => {
 
 async function generateOneRow(index) {
   const row = state.rows[index];
+  row.generating = true;
+  renderRows();
   setStatus(`ページ${row.pageNumber}を音声化中...`);
   try {
     const result = await window.spreadsheetAPI.generateOne({
@@ -427,14 +446,21 @@ async function generateOneRow(index) {
       voiceSettings: state.voiceSettings,
     });
     if (result.ok) {
+      // generateOne saves every row's current text before synthesizing.
+      state.rows.forEach((r) => {
+        r.dirty = false;
+      });
       row.hasMp3 = true;
-      renderRows();
+      row.generatedScript = row.script;
       setStatus(`ページ${row.pageNumber}の音声を生成しました`);
     } else {
       setStatus(`ページ${row.pageNumber}の音声生成に失敗しました: ${result.error}`);
     }
   } catch (error) {
     setStatus(`ページ${row.pageNumber}の音声生成に失敗しました: ${error.message || error}`);
+  } finally {
+    row.generating = false;
+    renderRows();
   }
 }
 
@@ -479,25 +505,42 @@ function formatBatchProgress(progress) {
 window.spreadsheetAPI.onBatchProgress((progress) => {
   switch (progress.type) {
     case 'start':
+      // batchGenerate saves every row's current text before it starts.
+      state.rows.forEach((row) => {
+        row.dirty = false;
+      });
+      renderRows();
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`一括音声出力中...(最大${progress.maxConcurrency}件同時処理)`);
       break;
-    case 'row-start':
+    case 'row-start': {
+      const row = state.rows.find((r) => r.pageNumber === progress.pageNumber);
+      if (row) row.generating = true;
+      renderRows();
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`ページ${progress.pageNumber}を音声化中...`);
       break;
+    }
     case 'row-done': {
       const row = state.rows.find((r) => r.pageNumber === progress.pageNumber);
-      if (row) row.hasMp3 = true;
+      if (row) {
+        row.hasMp3 = true;
+        row.generatedScript = row.script;
+        row.generating = false;
+      }
       renderRows();
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`ページ${progress.pageNumber}完了(${progress.completed}/${progress.total})`);
       break;
     }
-    case 'row-error':
+    case 'row-error': {
+      const row = state.rows.find((r) => r.pageNumber === progress.pageNumber);
+      if (row) row.generating = false;
+      renderRows();
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(`ページ${progress.pageNumber}でエラー: ${progress.error}`);
       break;
+    }
     case 'done':
       batchProgressEl.textContent = formatBatchProgress(progress);
       setStatus(
@@ -516,7 +559,14 @@ window.spreadsheetAPI.onBatchProgress((progress) => {
 window.spreadsheetAPI.onInit((data) => {
   state.workingFolder = data.workingFolder;
   state.prefix = data.prefix;
-  state.rows = data.rows;
+  state.rows = data.rows.map((row) => ({
+    ...row,
+    dirty: false,
+    generating: false,
+    // We have no record of what text an already-generated mp3 came from,
+    // so treat freshly loaded rows as in sync until the next edit.
+    generatedScript: row.hasMp3 ? row.script : null,
+  }));
   state.voiceSettings = data.voiceSettings;
   workingFolderLabel.textContent = state.workingFolder;
   renderVoiceSettingsLabel();

@@ -221,6 +221,11 @@ button:focus-visible {
   margin-right: 0;
 }
 
+.actions-col button.needs-attention {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 1px #b3261e;
+}
+
 /* ---- edit dialog ---- */
 #edit-dialog {
   width: 520px;
